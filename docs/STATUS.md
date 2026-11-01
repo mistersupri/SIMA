@@ -1,7 +1,7 @@
 # Status fitur SIMA
 
 Hanya fitur yang sudah dijalankan dan diuji yang ditandai selesai.
-Terakhir diperbarui: Tahap 2.
+Terakhir diperbarui: Tahap 3.
 
 ## Selesai dan teruji
 
@@ -27,7 +27,22 @@ Terakhir diperbarui: Tahap 2.
 
 Batasan Tahap 2: forgot-password belum mengirim email (tidak ada SMTP); admin memakai "Atur ulang password". Dropdown relasi memuat maks. 100 opsi. Topbar belum punya pencarian global dan notifikasi (ditambahkan bersama modulnya).
 
+## Tahap 3 selesai dan teruji
+
+- [x] Master barang: kode otomatis atomik (`BRG-ELK-000001`, `PRS-ATK-000001`), jenis tidak dapat diubah, arsip/aktifkan, audit
+- [x] Aset individual: registrasi 1-100 unit sekaligus (`INV-ELK-2026-000001`), nomor seri per unit, histori lokasi dan kondisi awal, edit dengan alasan wajib saat kondisi berubah, aset dihapuskan tidak bisa diubah, pembatasan akses per unit
+- [x] QR Code per aset (PNG/SVG, unduh), lookup by-code, cetak label massal (halaman cetak dengan CSS print), halaman `/q/:kode` untuk QR yang dipindai kamera bawaan ponsel
+- [x] Pemindai kamera di browser (BarcodeDetector, fallback jsQR) + input manual + pesan galat izin kamera. Teruji dengan kamera palsu Chromium yang memutar QR asli.
+- [x] Foto aset: validasi isi file (magic bytes), nama acak, penyimpanan privat, hanya lewat endpoint terautentikasi, foto utama, hapus
+- [x] Persediaan: ledger dengan row lock, saldo tidak negatif (service + CHECK database), barang masuk/keluar multi-baris atomik, kartu stok per gudang dan periode (saldo pembuka), riwayat transaksi, stok menipis
+- [x] UI: Data Barang, Aset (daftar, registrasi, detail 7 tab), Scan QR, Persediaan, Kartu stok
+- [x] 72 test integrasi backend + 3 test frontend + 43 pemeriksaan E2E browser (`node e2e/tahap3.cjs`)
+
+Bug yang ditemukan E2E dan diperbaiki: nomor seri yang diketik hilang diam-diam di form registrasi (nilai form dibuang oleh hasil parsing Zod).
+
+Batasan Tahap 3: penyesuaian stok dan saldo awal lewat import menunggu approval (Tahap 4) dan import (Tahap 7); cetak kartu inventaris berbentuk PDF menunggu Tahap 7; perpindahan lokasi aset hanya lewat mutasi (Tahap 4).
+
 ## Belum dikerjakan
 
-Barang/aset/QR, persediaan, pengadaan, approval, mutasi, peminjaman, pemeliharaan, penghapusan, stock opname, dashboard, laporan, import/export, PWA/offline, Docker deployment, backup/restore, dokumentasi API dan manual pengguna.
+Pengadaan, penerimaan, approval, penyesuaian stok, mutasi, peminjaman, pemeliharaan, penghapusan, stock opname, dashboard, laporan, import/export, PWA/offline, Docker deployment, backup/restore, dokumentasi API dan manual pengguna.
 Dashboard belum ada; setelah login pengguna diarahkan ke halaman pertama yang diizinkan.

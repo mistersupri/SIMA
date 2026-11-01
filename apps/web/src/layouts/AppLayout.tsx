@@ -61,8 +61,8 @@ export function AppLayout() {
   const [drawer, setDrawer] = useState(false);
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col bg-navy lg:flex">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[16rem_1fr] print:block">
+      <aside className="sticky top-0 hidden h-dvh flex-col bg-navy lg:flex print:hidden">
         <Brand />
         <SidebarNav />
       </aside>
@@ -87,7 +87,7 @@ export function AppLayout() {
       </Dialog.Root>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-line bg-surface px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-14 print:hidden items-center justify-between gap-3 border-b border-line bg-surface px-4 lg:px-6">
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Buka menu" onClick={() => setDrawer(true)}>
             <MenuIcon className="size-5" aria-hidden />
           </Button>
@@ -129,7 +129,7 @@ export function AppLayout() {
             </Menu.Root>
           </div>
         </header>
-        <main className="min-w-0 flex-1 p-4 lg:p-6">
+        <main className="min-w-0 flex-1 p-4 lg:p-6 print:p-0">
           <Outlet />
         </main>
       </div>

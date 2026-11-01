@@ -39,6 +39,15 @@ Login awal: `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` dari `.env`. Ga
 | `pnpm db:seed` | Seed ulang (idempoten) |
 | `pnpm db:reset` | Hapus dan bangun ulang database lokal |
 
+### E2E browser
+
+Skrip di `e2e/` memakai Playwright (Chromium). Jalankan stack (`pnpm dev`) di atas database **kosong yang baru di-seed**, lalu:
+
+```bash
+node e2e/tahap2.cjs   # autentikasi, pengguna, role, master data
+node e2e/tahap3.cjs   # barang, aset, QR, foto, persediaan, scan (butuh ffmpeg untuk kamera palsu)
+```
+
 ### Database test
 
 `pnpm test` memakai `.env.test` (tidak di-commit). Buat dari `.env` dengan nama database berakhiran `_test`:

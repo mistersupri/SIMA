@@ -1,4 +1,4 @@
-import { Database, ShieldCheck, Users, type LucideIcon } from 'lucide-react';
+import { Boxes, Database, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -16,6 +16,15 @@ export interface NavGroup {
 
 // Hanya halaman yang benar-benar ada. Menu baru ditambahkan bersama modulnya.
 export const NAV: NavGroup[] = [
+  {
+    title: 'Inventaris',
+    items: [
+      { to: '/barang', label: 'Data Barang', icon: Package, permission: 'items.view', match: '/barang' },
+      { to: '/aset', label: 'Aset', icon: Boxes, permission: 'assets.view', match: '/aset' },
+      { to: '/scan', label: 'Scan QR', icon: ScanLine, permission: 'assets.view', match: '/scan' },
+      { to: '/persediaan', label: 'Persediaan', icon: Warehouse, permission: 'stocks.view', match: '/persediaan' },
+    ],
+  },
   {
     title: 'Pengaturan',
     items: [

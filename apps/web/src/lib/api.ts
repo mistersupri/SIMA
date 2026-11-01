@@ -19,7 +19,8 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<ApiSuccess<T>> {
   const headers: Record<string, string> = {};
-  if (body !== undefined) headers['content-type'] = 'application/json';
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body !== undefined && !isForm) headers['content-type'] = 'application/json';
   if (method !== 'GET' && csrfToken) headers['x-csrf-token'] = csrfToken;
 
   let res: Response;
@@ -28,7 +29,7 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
       method,
       headers,
       credentials: 'include',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
       signal,
     });
   } catch (err) {
@@ -45,6 +46,7 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>('GET', path, undefined, signal),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
+  upload: <T>(path: string, form: FormData) => request<T>('POST', path, form),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
   put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
   delete: <T>(path: string) => request<T>('DELETE', path),
