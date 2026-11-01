@@ -12,6 +12,11 @@ import { userRoutes } from './modules/users/routes';
 import { roleRoutes } from './modules/roles/routes';
 import { masterRoutes } from './modules/master/routes';
 import { Prisma } from '@prisma/client';
+import multipart from '@fastify/multipart';
+import { itemRoutes } from './modules/items/routes';
+import { assetRoutes } from './modules/assets/routes';
+import { fileRoutes } from './modules/files/routes';
+import { stockRoutes } from './modules/stocks/routes';
 
 /** Label Bahasa Indonesia untuk kolom yang bisa bentrok pada unique constraint. */
 const FIELD_LABEL: Record<string, string> = {
@@ -43,6 +48,7 @@ export async function buildApp(env: Env) {
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cookie, { secret: env.SESSION_SECRET });
   await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute' });
+  await app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024, files: 1, fields: 5 } });
   await authPlugin(app, env);
 
   app.setErrorHandler((err: FastifyError | AppError | ZodError, req, reply) => {
@@ -91,6 +97,10 @@ export async function buildApp(env: Env) {
       await api.register(userRoutes);
       await api.register(roleRoutes);
       await api.register(masterRoutes);
+      await api.register(itemRoutes);
+      await api.register(assetRoutes);
+      await api.register(fileRoutes);
+      await api.register(stockRoutes);
     },
     { prefix: '/api/v1' },
   );
