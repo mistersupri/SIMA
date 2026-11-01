@@ -13,6 +13,19 @@ import { roleRoutes } from './modules/roles/routes';
 import { masterRoutes } from './modules/master/routes';
 import { Prisma } from '@prisma/client';
 
+/** Label Bahasa Indonesia untuk kolom yang bisa bentrok pada unique constraint. */
+const FIELD_LABEL: Record<string, string> = {
+  code: 'Kode',
+  codePrefix: 'Awalan kode',
+  name: 'Nama',
+  email: 'Email',
+  nip: 'NIP',
+  number: 'Nomor dokumen',
+  serialNumber: 'Nomor seri',
+  itemId: 'Barang',
+  assetId: 'Aset',
+};
+
 export async function buildApp(env: Env) {
   const app = Fastify({
     logger:
@@ -40,7 +53,7 @@ export async function buildApp(env: Env) {
         return reply.code(409).send({
           success: false,
           message: 'Data dengan nilai yang sama sudah ada',
-          errors: fields.map((f) => ({ field: f, message: `${f} sudah dipakai` })),
+          errors: fields.map((f) => ({ field: f, message: `${FIELD_LABEL[f] ?? f} sudah dipakai` })),
         });
       }
       if (err.code === 'P2003') return reply.code(409).send({ success: false, message: 'Data terkait tidak valid atau masih dipakai data lain' });

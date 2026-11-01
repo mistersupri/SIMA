@@ -1,9 +1,10 @@
 import { defineConfig } from 'tsup';
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ['src/index.ts'],
   format: ['esm'],
   dts: true,
-  clean: true,
+  // Mode watch tidak membersihkan dist: API mungkin sedang mengimpornya saat startup.
+  clean: !options.watch,
   sourcemap: true,
-});
+}));
