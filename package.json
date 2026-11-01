@@ -1,0 +1,26 @@
+{
+  "name": "sima",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SIMA, Sistem Informasi Manajemen Inventaris Barang",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "pnpm --filter @sima/shared build && pnpm --filter @sima/api build && pnpm --filter @sima/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @sima/shared build && pnpm --filter @sima/api test",
+    "db:up": "node scripts/db.mjs up",
+    "db:down": "node scripts/db.mjs down",
+    "db:migrate": "pnpm --filter @sima/api db:migrate",
+    "db:deploy": "pnpm --filter @sima/api db:deploy",
+    "db:seed": "pnpm --filter @sima/api db:seed",
+    "db:reset": "pnpm --filter @sima/api db:reset",
+    "db:studio": "pnpm --filter @sima/api db:studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+storage/*
+!storage/.gitkeep
+backups/*
+!backups/.gitkeep
+pgdata
+.DS_Store
+*.log
+.vite

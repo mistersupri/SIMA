@@ -1,0 +1,71 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import 'tailwindcss';
+
+/* Token desain: lihat DESIGN.md untuk alasan setiap nilai. */
+@theme {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-navy: #172554;
+  --color-brand: #2563eb;
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-ink: #1e293b;
+  --color-muted: #475569;
+  --color-line: #e2e8f0;
+  --color-wash: #f1f5f9;
+
+  --color-success: #16a34a;
+  --color-success-ink: #166534;
+  --color-success-wash: #dcfce7;
+  --color-warning: #d97706;
+  --color-warning-ink: #92400e;
+  --color-warning-wash: #fef3c7;
+  --color-danger: #dc2626;
+  --color-danger-ink: #b91c1c;
+  --color-danger-wash: #fee2e2;
+
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-tag: 4px;
+}
+
+@layer base {
+  html {
+    font-size: 15px;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Motif identitas: cap kode untuk kode inventaris dan nomor dokumen. */
+.code-stamp {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.85em;
+  background: var(--color-wash);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-tag);
+  padding: 0.1em 0.45em;
+  white-space: nowrap;
+}

@@ -1,0 +1,1280 @@
+// SIMA, Sistem Informasi Manajemen Inventaris Barang
+// Aturan umum: PK UUID, waktu TIMESTAMPTZ, uang Decimal(18,2), kuantitas Decimal(18,3).
+// Constraint yang tidak bisa diekspresikan Prisma (CHECK, partial unique index, trigger
+// immutability) ada di migration "constraints_and_triggers".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- ENUMS
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LocationType {
+  BUILDING
+  FLOOR
+  ROOM
+  WAREHOUSE_AREA
+  OTHER
+}
+
+enum ItemType {
+  ASSET
+  SUPPLY
+}
+
+enum AssetCondition {
+  GOOD
+  MINOR_DAMAGE
+  MAJOR_DAMAGE
+}
+
+enum AssetStatus {
+  AVAILABLE
+  LOANED
+  UNDER_MAINTENANCE
+  MISSING
+  DISPOSED
+}
+
+/// Status umum dokumen sederhana (penyesuaian stok, penghapusan).
+enum DocStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProcurementStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum GoodsReceiptStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum StockTxType {
+  OPENING
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum MutationStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  IN_TRANSFER
+  COMPLETED
+  CANCELLED
+}
+
+enum LoanStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ACTIVE
+  RETURNED
+  OVERDUE
+  CANCELLED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+}
+
+enum MaintenanceStatus {
+  REPORTED
+  PENDING_APPROVAL
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum DisposalMethod {
+  SOLD
+  DESTROYED
+  GRANTED
+  TRANSFERRED
+  OTHER
+}
+
+enum OpnameStatus {
+  DRAFT
+  IN_PROGRESS
+  SUBMITTED
+  VERIFIED
+  CANCELLED
+}
+
+enum OpnameResult {
+  MATCH
+  MISMATCH
+  NOT_FOUND
+  NOT_CHECKED
+  UNREGISTERED
+}
+
+enum OpnameDecision {
+  APPLY
+  REJECT
+}
+
+enum ApprovalEntity {
+  PROCUREMENT
+  MUTATION
+  LOAN
+  MAINTENANCE
+  STOCK_ADJUSTMENT
+  DISPOSAL
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalStepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+enum ApprovalActionType {
+  SUBMIT
+  APPROVE
+  REJECT
+  CANCEL
+}
+
+enum ImportType {
+  ITEMS
+  ASSETS
+  LOCATIONS
+  OPENING_STOCK
+}
+
+enum ImportStatus {
+  PREVIEWED
+  COMMITTED
+  EXPIRED
+}
+
+// ---------------------------------------------------------------- AUTH & ORGANISASI
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  users User[]
+  units OrganizationalUnit[]
+
+  @@map("organizations")
+}
+
+model User {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String     @db.Uuid
+  email              String     @unique
+  name               String
+  passwordHash       String
+  status             UserStatus @default(ACTIVE)
+  unitId             String?    @db.Uuid
+  mustChangePassword Boolean    @default(false)
+  failedLoginCount   Int        @default(0)
+  lockedUntil        DateTime?  @db.Timestamptz(6)
+  lastLoginAt        DateTime?  @db.Timestamptz(6)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @db.Timestamptz(6)
+
+  organization                      Organization            @relation(fields: [organizationId], references: [id])
+  unit                              OrganizationalUnit?     @relation("UserUnit", fields: [unitId], references: [id])
+  roles                             UserRole[]
+  unitAccess                        UserUnitAccess[]
+  sessions                          Session[]
+  resetTokens                       PasswordResetToken[]
+  notifications                     Notification[]
+  itemCreatedByRel                  Item[]                  @relation("Item_createdById")
+  fileUploadedByRel                 File[]                  @relation("File_uploadedById")
+  assetCreatedByRel                 Asset[]                 @relation("Asset_createdById")
+  assetLocationHistoryChangedByRel  AssetLocationHistory[]  @relation("AssetLocationHistory_changedById")
+  assetConditionHistoryChangedByRel AssetConditionHistory[] @relation("AssetConditionHistory_changedById")
+  procurementCreatedByRel           Procurement[]           @relation("Procurement_createdById")
+  goodsReceiptReceivedByRel         GoodsReceipt[]          @relation("GoodsReceipt_receivedById")
+  goodsReceiptConfirmedByRel        GoodsReceipt[]          @relation("GoodsReceipt_confirmedById")
+  stockTransactionCreatedByRel      StockTransaction[]      @relation("StockTransaction_createdById")
+  stockAdjustmentCreatedByRel       StockAdjustment[]       @relation("StockAdjustment_createdById")
+  assetMutationCreatedByRel         AssetMutation[]         @relation("AssetMutation_createdById")
+  assetMutationCompletedByRel       AssetMutation[]         @relation("AssetMutation_completedById")
+  loanCreatedByRel                  Loan[]                  @relation("Loan_createdById")
+  maintenanceCreatedByRel           Maintenance[]           @relation("Maintenance_createdById")
+  disposalCreatedByRel              Disposal[]              @relation("Disposal_createdById")
+  stockOpnameCreatedByRel           StockOpname[]           @relation("StockOpname_createdById")
+  stockOpnameVerifiedByRel          StockOpname[]           @relation("StockOpname_verifiedById")
+  stockOpnameAssignmentUserRel      StockOpnameAssignment[] @relation("StockOpnameAssignment_userId")
+  stockOpnameDetailScannedByRel     StockOpnameDetail[]     @relation("StockOpnameDetail_scannedById")
+  stockOpnameDetailDecidedByRel     StockOpnameDetail[]     @relation("StockOpnameDetail_decidedById")
+  approvalRequestRequestedByRel     ApprovalRequest[]       @relation("ApprovalRequest_requestedById")
+  approvalStepActedByRel            ApprovalStep[]          @relation("ApprovalStep_actedById")
+  approvalActionActorRel            ApprovalAction[]        @relation("ApprovalAction_actorId")
+  importBatchCreatedByRel           ImportBatch[]           @relation("ImportBatch_createdById")
+
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  users         UserRole[]
+  permissions   RolePermission[]
+  approvalSteps ApprovalStep[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  module      String
+  description String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  roles RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+model UserRole {
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Session {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @db.Uuid
+  /// SHA-256 dari token cookie. Token mentah tidak pernah disimpan.
+  tokenHash  String    @unique
+  csrfToken  String
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lastSeenAt DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(6)
+  usedAt    DateTime? @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model OrganizationalUnit {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @db.Uuid
+  parentId       String?  @db.Uuid
+  code           String   @unique
+  name           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  parent       OrganizationalUnit?  @relation("UnitTree", fields: [parentId], references: [id])
+  children     OrganizationalUnit[] @relation("UnitTree")
+  users        User[]               @relation("UserUnit")
+  userAccess   UserUnitAccess[]
+  locations    Location[]
+  persons      Person[]
+  assets       Asset[]
+
+  @@map("organizational_units")
+}
+
+model UserUnitAccess {
+  userId String @db.Uuid
+  unitId String @db.Uuid
+
+  user User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unit OrganizationalUnit @relation(fields: [unitId], references: [id])
+
+  @@id([userId, unitId])
+  @@map("user_unit_access")
+}
+
+model Location {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId  String?      @db.Uuid
+  unitId    String?      @db.Uuid
+  type      LocationType @default(ROOM)
+  code      String       @unique
+  name      String
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @db.Timestamptz(6)
+
+  parent     Location?           @relation("LocationTree", fields: [parentId], references: [id])
+  children   Location[]          @relation("LocationTree")
+  unit       OrganizationalUnit? @relation(fields: [unitId], references: [id])
+  assets     Asset[]
+  warehouses Warehouse[]
+
+  @@index([parentId])
+  @@index([unitId])
+  @@map("locations")
+}
+
+// ---------------------------------------------------------------- MASTER
+
+model Category {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId   String?  @db.Uuid
+  code       String   @unique
+  /// Tiga huruf untuk kode otomatis, misal ELK menghasilkan INV-ELK-2026-000001.
+  codePrefix String   @unique
+  name       String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  items    Item[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  items Item[]
+
+  @@map("brands")
+}
+
+model UnitOfMeasure {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  items Item[]
+
+  @@map("units_of_measure")
+}
+
+model Vendor {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  procurements Procurement[]
+  assets       Asset[]
+  maintenances Maintenance[]
+
+  @@map("vendors")
+}
+
+model FundingSource {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  procurements Procurement[]
+  assets       Asset[]
+
+  @@map("funding_sources")
+}
+
+/// Penanggung jawab barang (pegawai). Tidak harus punya akun login.
+model Person {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nip       String?  @unique
+  name      String
+  position  String?
+  unitId    String?  @db.Uuid
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  unit              OrganizationalUnit? @relation(fields: [unitId], references: [id])
+  assets            Asset[]
+  loansBorrowed     Loan[]
+  stockTransactions StockTransaction[]
+
+  @@index([unitId])
+  @@map("persons")
+}
+
+model Warehouse {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code       String   @unique
+  name       String
+  locationId String?  @db.Uuid
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  location      Location?          @relation(fields: [locationId], references: [id])
+  balances      StockBalance[]
+  transactions  StockTransaction[]
+  adjustments   StockAdjustment[]
+  goodsReceipts GoodsReceipt[]
+
+  @@map("warehouses")
+}
+
+// ---------------------------------------------------------------- BARANG & ASET
+
+model Item {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Aset: BRG-ELK-000001. Persediaan: PRS-ATK-000001.
+  code            String    @unique
+  name            String
+  type            ItemType
+  categoryId      String    @db.Uuid
+  brandId         String?   @db.Uuid
+  model           String?
+  specification   String?
+  description     String?
+  unitOfMeasureId String    @db.Uuid
+  /// Batas stok minimum, hanya bermakna untuk persediaan.
+  minStock        Decimal   @default(0) @db.Decimal(18, 3)
+  isActive        Boolean   @default(true)
+  archivedAt      DateTime? @db.Timestamptz(6)
+  createdById     String?   @db.Uuid
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(6)
+
+  category            Category                 @relation(fields: [categoryId], references: [id])
+  brand               Brand?                   @relation(fields: [brandId], references: [id])
+  unitOfMeasure       UnitOfMeasure            @relation(fields: [unitOfMeasureId], references: [id])
+  assets              Asset[]
+  balances            StockBalance[]
+  attachments         ItemAttachment[]
+  procurementDetails  ProcurementDetail[]
+  goodsReceiptDetails GoodsReceiptDetail[]
+  stockTxDetails      StockTransactionDetail[]
+  stockAdjustments    StockAdjustment[]
+  createdByUser       User?                    @relation("Item_createdById", fields: [createdById], references: [id])
+
+  @@index([type, isActive])
+  @@index([categoryId])
+  @@index([name])
+  @@map("items")
+}
+
+model ItemAttachment {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId String @db.Uuid
+  fileId String @db.Uuid
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id])
+
+  @@unique([itemId, fileId])
+  @@map("item_attachments")
+}
+
+model File {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Nama acak di private storage. Tidak pernah dipakai sebagai URL publik.
+  storageKey   String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  sha256       String
+  uploadedById String?  @db.Uuid
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  assetPhotos     AssetPhoto[]
+  itemAttachments ItemAttachment[]
+  opnamePhotos    StockOpnamePhoto[]
+  importBatches   ImportBatch[]
+  uploadedByUser  User?              @relation("File_uploadedById", fields: [uploadedById], references: [id])
+
+  @@map("files")
+}
+
+model Asset {
+  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// INV-ELK-2026-000001. Dibuat server, unik lewat constraint database.
+  code                 String         @unique
+  itemId               String         @db.Uuid
+  serialNumber         String?
+  acquisitionDate      DateTime?      @db.Date
+  acquisitionYear      Int
+  fundingSourceId      String?        @db.Uuid
+  vendorId             String?        @db.Uuid
+  acquisitionCost      Decimal        @default(0) @db.Decimal(18, 2)
+  condition            AssetCondition @default(GOOD)
+  status               AssetStatus    @default(AVAILABLE)
+  /// Unit pengelola/pemilik.
+  unitId               String         @db.Uuid
+  /// Lokasi fisik.
+  locationId           String         @db.Uuid
+  /// Penanggung jawab.
+  personId             String?        @db.Uuid
+  notes                String?
+  goodsReceiptDetailId String?        @db.Uuid
+  disposedAt           DateTime?      @db.Timestamptz(6)
+  archivedAt           DateTime?      @db.Timestamptz(6)
+  createdById          String?        @db.Uuid
+  createdAt            DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime       @updatedAt @db.Timestamptz(6)
+
+  item             Item                    @relation(fields: [itemId], references: [id])
+  fundingSource    FundingSource?          @relation(fields: [fundingSourceId], references: [id])
+  vendor           Vendor?                 @relation(fields: [vendorId], references: [id])
+  unit             OrganizationalUnit      @relation(fields: [unitId], references: [id])
+  location         Location                @relation(fields: [locationId], references: [id])
+  person           Person?                 @relation(fields: [personId], references: [id])
+  receiptDetail    GoodsReceiptDetail?     @relation(fields: [goodsReceiptDetailId], references: [id])
+  photos           AssetPhoto[]
+  mutationDetails  AssetMutationDetail[]
+  locationHistory  AssetLocationHistory[]
+  conditionHistory AssetConditionHistory[]
+  loanDetails      LoanDetail[]
+  maintenances     Maintenance[]
+  disposalDetails  DisposalDetail[]
+  opnameDetails    StockOpnameDetail[]
+  createdByUser    User?                   @relation("Asset_createdById", fields: [createdById], references: [id])
+
+  @@unique([itemId, serialNumber])
+  @@index([status])
+  @@index([condition])
+  @@index([locationId])
+  @@index([unitId])
+  @@index([personId])
+  @@map("assets")
+}
+
+model AssetPhoto {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId   String   @db.Uuid
+  fileId    String   @db.Uuid
+  isPrimary Boolean  @default(false)
+  caption   String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  file  File  @relation(fields: [fileId], references: [id])
+
+  @@index([assetId])
+  @@map("asset_photos")
+}
+
+model AssetLocationHistory {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId        String   @db.Uuid
+  fromLocationId String?  @db.Uuid
+  toLocationId   String   @db.Uuid
+  fromUnitId     String?  @db.Uuid
+  toUnitId       String?  @db.Uuid
+  fromPersonId   String?  @db.Uuid
+  toPersonId     String?  @db.Uuid
+  /// REGISTRATION, MUTATION, OPNAME, EDIT
+  sourceType     String
+  sourceId       String?  @db.Uuid
+  note           String?
+  changedById    String?  @db.Uuid
+  changedAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  asset         Asset @relation(fields: [assetId], references: [id])
+  changedByUser User? @relation("AssetLocationHistory_changedById", fields: [changedById], references: [id])
+
+  @@index([assetId, changedAt])
+  @@map("asset_location_histories")
+}
+
+model AssetConditionHistory {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId       String          @db.Uuid
+  fromCondition AssetCondition?
+  toCondition   AssetCondition
+  fromStatus    AssetStatus?
+  toStatus      AssetStatus
+  /// REGISTRATION, LOAN, RETURN, MAINTENANCE, DISPOSAL, OPNAME, EDIT
+  sourceType    String
+  sourceId      String?         @db.Uuid
+  note          String?
+  changedById   String?         @db.Uuid
+  changedAt     DateTime        @default(now()) @db.Timestamptz(6)
+
+  asset         Asset @relation(fields: [assetId], references: [id])
+  changedByUser User? @relation("AssetConditionHistory_changedById", fields: [changedById], references: [id])
+
+  @@index([assetId, changedAt])
+  @@map("asset_condition_histories")
+}
+
+// ---------------------------------------------------------------- PENGADAAN
+
+model Procurement {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number          String            @unique
+  date            DateTime          @db.Date
+  fiscalYear      Int
+  vendorId        String            @db.Uuid
+  fundingSourceId String?           @db.Uuid
+  status          ProcurementStatus @default(DRAFT)
+  totalAmount     Decimal           @default(0) @db.Decimal(18, 2)
+  notes           String?
+  createdById     String            @db.Uuid
+  submittedAt     DateTime?         @db.Timestamptz(6)
+  approvedAt      DateTime?         @db.Timestamptz(6)
+  completedAt     DateTime?         @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @db.Timestamptz(6)
+
+  vendor        Vendor              @relation(fields: [vendorId], references: [id])
+  fundingSource FundingSource?      @relation(fields: [fundingSourceId], references: [id])
+  details       ProcurementDetail[]
+  receipts      GoodsReceipt[]
+  createdByUser User                @relation("Procurement_createdById", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([fiscalYear])
+  @@map("procurements")
+}
+
+model ProcurementDetail {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  procurementId String  @db.Uuid
+  itemId        String  @db.Uuid
+  quantity      Decimal @db.Decimal(18, 3)
+  unitPrice     Decimal @db.Decimal(18, 2)
+  subtotal      Decimal @db.Decimal(18, 2)
+  receivedQty   Decimal @default(0) @db.Decimal(18, 3)
+  notes         String?
+
+  procurement    Procurement          @relation(fields: [procurementId], references: [id], onDelete: Cascade)
+  item           Item                 @relation(fields: [itemId], references: [id])
+  receiptDetails GoodsReceiptDetail[]
+
+  @@index([procurementId])
+  @@map("procurement_details")
+}
+
+model GoodsReceipt {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number          String             @unique
+  procurementId   String             @db.Uuid
+  receivedDate    DateTime           @db.Date
+  warehouseId     String?            @db.Uuid
+  /// Default untuk unit aset yang dibuat dari penerimaan ini.
+  assetUnitId     String?            @db.Uuid
+  assetLocationId String?            @db.Uuid
+  assetPersonId   String?            @db.Uuid
+  status          GoodsReceiptStatus @default(DRAFT)
+  notes           String?
+  receivedById    String             @db.Uuid
+  confirmedAt     DateTime?          @db.Timestamptz(6)
+  confirmedById   String?            @db.Uuid
+  createdAt       DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @db.Timestamptz(6)
+
+  procurement     Procurement          @relation(fields: [procurementId], references: [id])
+  warehouse       Warehouse?           @relation(fields: [warehouseId], references: [id])
+  details         GoodsReceiptDetail[]
+  receivedByUser  User                 @relation("GoodsReceipt_receivedById", fields: [receivedById], references: [id])
+  confirmedByUser User?                @relation("GoodsReceipt_confirmedById", fields: [confirmedById], references: [id])
+
+  @@index([procurementId])
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptDetail {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  goodsReceiptId      String   @db.Uuid
+  procurementDetailId String   @db.Uuid
+  itemId              String   @db.Uuid
+  quantityReceived    Decimal  @db.Decimal(18, 3)
+  /// Nomor seri per unit aset, urut sesuai unit yang dibuat. Boleh kosong.
+  serialNumbers       String[]
+  notes               String?
+
+  goodsReceipt      GoodsReceipt      @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  procurementDetail ProcurementDetail @relation(fields: [procurementDetailId], references: [id])
+  item              Item              @relation(fields: [itemId], references: [id])
+  assets            Asset[]
+
+  @@index([goodsReceiptId])
+  @@map("goods_receipt_details")
+}
+
+// ---------------------------------------------------------------- PERSEDIAAN
+
+model StockBalance {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId      String   @db.Uuid
+  warehouseId String   @db.Uuid
+  quantity    Decimal  @default(0) @db.Decimal(18, 3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  item      Item      @relation(fields: [itemId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@unique([itemId, warehouseId])
+  @@map("stock_balances")
+}
+
+model StockTransaction {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number      String      @unique
+  type        StockTxType
+  date        DateTime    @db.Date
+  warehouseId String      @db.Uuid
+  /// Unit/penerima untuk barang keluar.
+  unitId      String?     @db.Uuid
+  personId    String?     @db.Uuid
+  /// GOODS_RECEIPT, IMPORT, MANUAL, ADJUSTMENT
+  sourceType  String?
+  sourceId    String?     @db.Uuid
+  notes       String?
+  createdById String      @db.Uuid
+  postedAt    DateTime    @default(now()) @db.Timestamptz(6)
+
+  warehouse     Warehouse                @relation(fields: [warehouseId], references: [id])
+  person        Person?                  @relation(fields: [personId], references: [id])
+  details       StockTransactionDetail[]
+  adjustment    StockAdjustment?
+  createdByUser User                     @relation("StockTransaction_createdById", fields: [createdById], references: [id])
+
+  @@index([date])
+  @@index([type])
+  @@map("stock_transactions")
+}
+
+/// Baris ledger. Tidak boleh diubah atau dihapus setelah diposting (trigger database).
+model StockTransactionDetail {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transactionId String   @db.Uuid
+  itemId        String   @db.Uuid
+  warehouseId   String   @db.Uuid
+  quantityIn    Decimal  @default(0) @db.Decimal(18, 3)
+  quantityOut   Decimal  @default(0) @db.Decimal(18, 3)
+  balanceAfter  Decimal  @db.Decimal(18, 3)
+  unitCost      Decimal? @db.Decimal(18, 2)
+  notes         String?
+  /// Urutan global agar kartu stok deterministik walau tanggal sama.
+  seq           BigInt   @default(autoincrement())
+
+  transaction StockTransaction @relation(fields: [transactionId], references: [id])
+  item        Item             @relation(fields: [itemId], references: [id])
+
+  @@index([itemId, warehouseId, seq])
+  @@index([transactionId])
+  @@map("stock_transaction_details")
+}
+
+model StockAdjustment {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number        String    @unique
+  itemId        String    @db.Uuid
+  warehouseId   String    @db.Uuid
+  /// Positif menambah, negatif mengurangi.
+  quantityDelta Decimal   @db.Decimal(18, 3)
+  reason        String
+  status        DocStatus @default(DRAFT)
+  createdById   String    @db.Uuid
+  submittedAt   DateTime? @db.Timestamptz(6)
+  completedAt   DateTime? @db.Timestamptz(6)
+  transactionId String?   @unique @db.Uuid
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(6)
+
+  item          Item              @relation(fields: [itemId], references: [id])
+  warehouse     Warehouse         @relation(fields: [warehouseId], references: [id])
+  transaction   StockTransaction? @relation(fields: [transactionId], references: [id])
+  createdByUser User              @relation("StockAdjustment_createdById", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@map("stock_adjustments")
+}
+
+// ---------------------------------------------------------------- MUTASI
+
+model AssetMutation {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number        String         @unique
+  date          DateTime       @db.Date
+  reason        String
+  status        MutationStatus @default(DRAFT)
+  createdById   String         @db.Uuid
+  submittedAt   DateTime?      @db.Timestamptz(6)
+  approvedAt    DateTime?      @db.Timestamptz(6)
+  movedAt       DateTime?      @db.Timestamptz(6)
+  completedAt   DateTime?      @db.Timestamptz(6)
+  completedById String?        @db.Uuid
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+
+  details         AssetMutationDetail[]
+  createdByUser   User                  @relation("AssetMutation_createdById", fields: [createdById], references: [id])
+  completedByUser User?                 @relation("AssetMutation_completedById", fields: [completedById], references: [id])
+
+  @@index([status])
+  @@map("asset_mutations")
+}
+
+model AssetMutationDetail {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mutationId     String  @db.Uuid
+  assetId        String  @db.Uuid
+  fromUnitId     String  @db.Uuid
+  toUnitId       String  @db.Uuid
+  fromLocationId String  @db.Uuid
+  toLocationId   String  @db.Uuid
+  fromPersonId   String? @db.Uuid
+  toPersonId     String? @db.Uuid
+
+  mutation AssetMutation @relation(fields: [mutationId], references: [id], onDelete: Cascade)
+  asset    Asset         @relation(fields: [assetId], references: [id])
+
+  @@unique([mutationId, assetId])
+  @@index([assetId])
+  @@map("asset_mutation_details")
+}
+
+// ---------------------------------------------------------------- PEMINJAMAN
+
+model Loan {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number             String     @unique
+  borrowerPersonId   String     @db.Uuid
+  unitId             String?    @db.Uuid
+  loanDate           DateTime   @db.Date
+  expectedReturnDate DateTime   @db.Date
+  purpose            String
+  status             LoanStatus @default(DRAFT)
+  createdById        String     @db.Uuid
+  submittedAt        DateTime?  @db.Timestamptz(6)
+  approvedAt         DateTime?  @db.Timestamptz(6)
+  handedOverAt       DateTime?  @db.Timestamptz(6)
+  returnedAt         DateTime?  @db.Timestamptz(6)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @db.Timestamptz(6)
+
+  borrower      Person       @relation(fields: [borrowerPersonId], references: [id])
+  details       LoanDetail[]
+  createdByUser User         @relation("Loan_createdById", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([expectedReturnDate])
+  @@map("loans")
+}
+
+model LoanDetail {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  loanId          String          @db.Uuid
+  assetId         String          @db.Uuid
+  conditionBefore AssetCondition
+  conditionAfter  AssetCondition?
+  /// true selama pinjaman belum selesai/ditolak/dibatalkan.
+  /// Partial unique index (assetId) WHERE isOpen mencegah pinjam ganda di level database.
+  isOpen          Boolean         @default(true)
+  returnedAt      DateTime?       @db.Timestamptz(6)
+  returnNotes     String?
+
+  loan  Loan  @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [assetId], references: [id])
+
+  @@unique([loanId, assetId])
+  @@index([assetId])
+  @@map("loan_details")
+}
+
+// ---------------------------------------------------------------- PEMELIHARAAN & PENGHAPUSAN
+
+model Maintenance {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number             String            @unique
+  assetId            String            @db.Uuid
+  date               DateTime          @db.Date
+  type               MaintenanceType
+  damageDescription  String
+  actionTaken        String?
+  cost               Decimal           @default(0) @db.Decimal(18, 2)
+  vendorId           String?           @db.Uuid
+  performerName      String?
+  status             MaintenanceStatus @default(REPORTED)
+  resultingCondition AssetCondition?
+  createdById        String            @db.Uuid
+  submittedAt        DateTime?         @db.Timestamptz(6)
+  startedAt          DateTime?         @db.Timestamptz(6)
+  completedAt        DateTime?         @db.Timestamptz(6)
+  createdAt          DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @db.Timestamptz(6)
+
+  asset         Asset   @relation(fields: [assetId], references: [id])
+  vendor        Vendor? @relation(fields: [vendorId], references: [id])
+  createdByUser User    @relation("Maintenance_createdById", fields: [createdById], references: [id])
+
+  @@index([assetId])
+  @@index([status])
+  @@map("maintenances")
+}
+
+model Disposal {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number      String         @unique
+  date        DateTime       @db.Date
+  reason      String
+  method      DisposalMethod @default(OTHER)
+  status      DocStatus      @default(DRAFT)
+  createdById String         @db.Uuid
+  submittedAt DateTime?      @db.Timestamptz(6)
+  approvedAt  DateTime?      @db.Timestamptz(6)
+  completedAt DateTime?      @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(6)
+
+  details       DisposalDetail[]
+  createdByUser User             @relation("Disposal_createdById", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@map("disposals")
+}
+
+model DisposalDetail {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  disposalId    String         @db.Uuid
+  assetId       String         @db.Uuid
+  lastCondition AssetCondition
+  notes         String?
+
+  disposal Disposal @relation(fields: [disposalId], references: [id], onDelete: Cascade)
+  asset    Asset    @relation(fields: [assetId], references: [id])
+
+  @@unique([disposalId, assetId])
+  @@index([assetId])
+  @@map("disposal_details")
+}
+
+// ---------------------------------------------------------------- STOCK OPNAME
+
+model StockOpname {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number       String       @unique
+  title        String
+  periodStart  DateTime     @db.Date
+  periodEnd    DateTime     @db.Date
+  locationId   String?      @db.Uuid
+  unitId       String?      @db.Uuid
+  status       OpnameStatus @default(DRAFT)
+  notes        String?
+  createdById  String       @db.Uuid
+  startedAt    DateTime?    @db.Timestamptz(6)
+  submittedAt  DateTime?    @db.Timestamptz(6)
+  verifiedAt   DateTime?    @db.Timestamptz(6)
+  verifiedById String?      @db.Uuid
+  createdAt    DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
+
+  assignments    StockOpnameAssignment[]
+  details        StockOpnameDetail[]
+  createdByUser  User                    @relation("StockOpname_createdById", fields: [createdById], references: [id])
+  verifiedByUser User?                   @relation("StockOpname_verifiedById", fields: [verifiedById], references: [id])
+
+  @@index([status])
+  @@map("stock_opnames")
+}
+
+model StockOpnameAssignment {
+  opnameId String @db.Uuid
+  userId   String @db.Uuid
+
+  opname   StockOpname @relation(fields: [opnameId], references: [id], onDelete: Cascade)
+  userUser User        @relation("StockOpnameAssignment_userId", fields: [userId], references: [id])
+
+  @@id([opnameId, userId])
+  @@map("stock_opname_assignments")
+}
+
+model StockOpnameDetail {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opnameId           String          @db.Uuid
+  /// Null untuk barang baru/tidak terdaftar.
+  assetId            String?         @db.Uuid
+  scannedCode        String?
+  expectedLocationId String?         @db.Uuid
+  expectedCondition  AssetCondition?
+  foundLocationId    String?         @db.Uuid
+  foundCondition     AssetCondition?
+  result             OpnameResult    @default(NOT_CHECKED)
+  notes              String?
+  scannedById        String?         @db.Uuid
+  scannedAt          DateTime?       @db.Timestamptz(6)
+  /// ID dari perangkat untuk sinkronisasi offline yang idempoten.
+  clientId           String?
+  clientRecordedAt   DateTime?       @db.Timestamptz(6)
+  decision           OpnameDecision?
+  decidedById        String?         @db.Uuid
+  decidedAt          DateTime?       @db.Timestamptz(6)
+  appliedAt          DateTime?       @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @db.Timestamptz(6)
+
+  opname        StockOpname        @relation(fields: [opnameId], references: [id], onDelete: Cascade)
+  asset         Asset?             @relation(fields: [assetId], references: [id])
+  photos        StockOpnamePhoto[]
+  scannedByUser User?              @relation("StockOpnameDetail_scannedById", fields: [scannedById], references: [id])
+  decidedByUser User?              @relation("StockOpnameDetail_decidedById", fields: [decidedById], references: [id])
+
+  @@unique([opnameId, assetId])
+  @@unique([opnameId, clientId])
+  @@index([opnameId, result])
+  @@map("stock_opname_details")
+}
+
+model StockOpnamePhoto {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  detailId  String   @db.Uuid
+  fileId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  detail StockOpnameDetail @relation(fields: [detailId], references: [id], onDelete: Cascade)
+  file   File              @relation(fields: [fileId], references: [id])
+
+  @@index([detailId])
+  @@map("stock_opname_photos")
+}
+
+// ---------------------------------------------------------------- APPROVAL, NOTIFIKASI, AUDIT
+
+model ApprovalRequest {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType     ApprovalEntity
+  entityId       String         @db.Uuid
+  documentNumber String
+  title          String
+  requestedById  String         @db.Uuid
+  status         ApprovalStatus @default(PENDING)
+  currentStep    Int            @default(1)
+  submittedAt    DateTime       @default(now()) @db.Timestamptz(6)
+  completedAt    DateTime?      @db.Timestamptz(6)
+
+  steps           ApprovalStep[]
+  actions         ApprovalAction[]
+  requestedByUser User             @relation("ApprovalRequest_requestedById", fields: [requestedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([status])
+  @@map("approval_requests")
+}
+
+model ApprovalStep {
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId String             @db.Uuid
+  stepOrder Int
+  /// Role yang berwenang menyetujui langkah ini.
+  roleId    String             @db.Uuid
+  status    ApprovalStepStatus @default(PENDING)
+  actedById String?            @db.Uuid
+  actedAt   DateTime?          @db.Timestamptz(6)
+  note      String?
+
+  request     ApprovalRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  role        Role             @relation(fields: [roleId], references: [id])
+  actions     ApprovalAction[]
+  actedByUser User?            @relation("ApprovalStep_actedById", fields: [actedById], references: [id])
+
+  @@unique([requestId, stepOrder])
+  @@map("approval_steps")
+}
+
+model ApprovalAction {
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId String             @db.Uuid
+  stepId    String?            @db.Uuid
+  actorId   String             @db.Uuid
+  action    ApprovalActionType
+  note      String?
+  createdAt DateTime           @default(now()) @db.Timestamptz(6)
+
+  request   ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  step      ApprovalStep?   @relation(fields: [stepId], references: [id])
+  actorUser User            @relation("ApprovalAction_actorId", fields: [actorId], references: [id])
+
+  @@index([requestId])
+  @@map("approval_actions")
+}
+
+model Notification {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @db.Uuid
+  type       String
+  title      String
+  body       String?
+  entityType String?
+  entityId   String?   @db.Uuid
+  /// Mencegah notifikasi terjadwal ganda (misal keterlambatan harian).
+  dedupeKey  String?
+  readAt     DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+/// Histori perubahan data. Append-only (trigger database menolak UPDATE/DELETE).
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  requestId  String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------- UTILITAS
+
+/// Penomoran atomik: satu baris per kunci (misal ASSET, PGD-2026).
+model DocumentSequence {
+  key   String @id
+  value Int    @default(0)
+
+  @@map("document_sequences")
+}
+
+/// Hasil parsing import yang menunggu konfirmasi (preview lalu commit).
+model ImportBatch {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        ImportType
+  status      ImportStatus @default(PREVIEWED)
+  fileId      String?      @db.Uuid
+  fileName    String
+  totalRows   Int
+  validRows   Int
+  errorRows   Int
+  /// Baris tervalidasi + daftar kesalahan per baris.
+  payload     Json
+  result      Json?
+  createdById String       @db.Uuid
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  committedAt DateTime?    @db.Timestamptz(6)
+
+  file          File? @relation(fields: [fileId], references: [id])
+  createdByUser User  @relation("ImportBatch_createdById", fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@map("import_batches")
+}
