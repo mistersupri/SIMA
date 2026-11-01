@@ -15,6 +15,7 @@ const schema = z.object({
   COOKIE_SECURE: boolean.default(false),
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
+  LOGIN_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(10),
   STORAGE_DIR: z.string().default('./storage'),
   MAX_UPLOAD_MB: z.coerce.number().positive().default(10),
   ORG_CODE: z.string().default('INSTANSI'),
