@@ -6,7 +6,7 @@ import { prisma } from '../../lib/prisma';
 import { ok, paginated } from '../../lib/respond';
 import { AppError, conflict, forbidden, notFound, unprocessable } from '../../lib/errors';
 import { writeAudit } from '../../lib/audit';
-import { nextSequence, pad } from '../../lib/sequence';
+import { assetSnapshot, createAssetUnits } from './service';
 import { parseBool, parseListQuery } from '../../lib/list';
 import { assertUnitAccess, unitScope } from '../../lib/scope';
 import { removeStoredFile, saveFile } from '../../lib/storage';
@@ -29,10 +29,7 @@ const detailInclude = {
   photos: { orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }] },
 } satisfies Prisma.AssetInclude;
 
-const snapshot = (a: { id: string; code: string; itemId: string; serialNumber: string | null; condition: string; status: string; unitId: string; locationId: string; personId: string | null; acquisitionCost: unknown; acquisitionYear: number; notes: string | null }) => ({
-  id: a.id, code: a.code, itemId: a.itemId, serialNumber: a.serialNumber, condition: a.condition, status: a.status,
-  unitId: a.unitId, locationId: a.locationId, personId: a.personId, acquisitionCost: String(a.acquisitionCost), acquisitionYear: a.acquisitionYear, notes: a.notes,
-});
+const snapshot = assetSnapshot;
 
 export const qrUrl = (appUrl: string, code: string) => `${appUrl.replace(/\/$/, '')}/q/${encodeURIComponent(code)}`;
 
@@ -107,27 +104,11 @@ export async function assetRoutes(app: FastifyInstance) {
       throw unprocessable('Nomor seri ganda', [{ field: 'serialNumbers', message: 'Ada nomor seri yang sama dalam daftar' }]);
     }
 
-    const created = await prisma.$transaction(async (tx) => {
-      const out = [];
-      for (let i = 0; i < input.quantity; i++) {
-        const seq = await nextSequence(tx, 'ASSET');
-        const code = `INV-${item.category.codePrefix}-${input.acquisitionYear}-${pad(seq)}`;
-        const asset = await tx.asset.create({
-          data: {
-            code, itemId: item.id, serialNumber: serials[i] || null, acquisitionDate: input.acquisitionDate ? new Date(input.acquisitionDate) : null,
-            acquisitionYear: input.acquisitionYear, fundingSourceId: input.fundingSourceId, vendorId: input.vendorId,
-            acquisitionCost: input.acquisitionCost, condition: input.condition, status: 'AVAILABLE', unitId: input.unitId,
-            locationId: input.locationId, personId: input.personId, notes: input.notes, createdById: auth.user.id,
-          },
-          include: listInclude,
-        });
-        await tx.assetLocationHistory.create({ data: { assetId: asset.id, toLocationId: asset.locationId, toUnitId: asset.unitId, toPersonId: asset.personId, sourceType: 'REGISTRATION', note: 'Registrasi aset', changedById: auth.user.id } });
-        await tx.assetConditionHistory.create({ data: { assetId: asset.id, toCondition: asset.condition, toStatus: 'AVAILABLE', sourceType: 'REGISTRATION', note: 'Registrasi aset', changedById: auth.user.id } });
-        await writeAudit(tx, req, { action: 'CREATE', entityType: 'Asset', entityId: asset.id, after: snapshot(asset) });
-        out.push(asset);
-      }
-      return out;
-    });
+    const created = await prisma.$transaction((tx) => createAssetUnits(tx, req, {
+      item, count: input.quantity, serials: serials.map((x) => x || null), acquisitionDate: input.acquisitionDate ? new Date(input.acquisitionDate) : null,
+      acquisitionYear: input.acquisitionYear, fundingSourceId: input.fundingSourceId, vendorId: input.vendorId, acquisitionCost: input.acquisitionCost,
+      condition: input.condition, unitId: input.unitId, locationId: input.locationId, personId: input.personId, notes: input.notes, userId: auth.user.id, note: 'Registrasi aset',
+    }));
     return reply.code(201).send(ok(created, `${created.length} aset berhasil didaftarkan`));
   });
 

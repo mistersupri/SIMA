@@ -4,6 +4,7 @@ import { nextDocNumber } from '../../lib/sequence';
 import { unprocessable } from '../../lib/errors';
 import { writeAudit } from '../../lib/audit';
 import type { FastifyRequest } from 'fastify';
+import { notify, usersWithPermission } from '../notifications/service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -87,6 +88,18 @@ export async function postStockTransaction(tx: Tx, req: FastifyRequest | null, i
       },
     });
     results.push({ itemId: line.itemId, before: before.toString(), after: after.toString() });
+
+    // Peringatan stok menipis (sekali per barang per hari) saat total saldo turun di bawah minimum.
+    if (delta.isNegative() && item.minStock.gt(0)) {
+      const sum = await tx.stockBalance.aggregate({ where: { itemId: item.id }, _sum: { quantity: true } });
+      if ((sum._sum.quantity ?? new Prisma.Decimal(0)).lt(item.minStock)) {
+        const recipients = await usersWithPermission(tx, 'stocks.in');
+        await notify(tx, recipients, {
+          type: 'stock.low', title: `Stok menipis: ${item.name}`, body: `Total saldo ${(sum._sum.quantity ?? 0).toString()}, minimum ${item.minStock.toString()}`,
+          entityType: 'ITEM', entityId: item.id, dedupeKey: `lowstock:${item.id}:${input.date.toISOString().slice(0, 10)}`,
+        });
+      }
+    }
   }
 
   await writeAudit(tx, req, {

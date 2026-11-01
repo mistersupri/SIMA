@@ -17,6 +17,12 @@ import { itemRoutes } from './modules/items/routes';
 import { assetRoutes } from './modules/assets/routes';
 import { fileRoutes } from './modules/files/routes';
 import { stockRoutes } from './modules/stocks/routes';
+import { approvalRoutes } from './modules/approvals/routes';
+import { notificationRoutes } from './modules/notifications/routes';
+import { procurementRoutes } from './modules/procurements/routes';
+import { mutationRoutes } from './modules/mutations/routes';
+import { loanRoutes } from './modules/loans/routes';
+import { stockAdjustmentRoutes } from './modules/stocks/adjustments';
 
 /** Label Bahasa Indonesia untuk kolom yang bisa bentrok pada unique constraint. */
 const FIELD_LABEL: Record<string, string> = {
@@ -101,6 +107,12 @@ export async function buildApp(env: Env) {
       await api.register(assetRoutes);
       await api.register(fileRoutes);
       await api.register(stockRoutes);
+      await api.register(approvalRoutes);
+      await api.register(notificationRoutes);
+      await api.register(procurementRoutes);
+      await api.register(mutationRoutes);
+      await api.register(loanRoutes);
+      await api.register(stockAdjustmentRoutes);
     },
     { prefix: '/api/v1' },
   );
