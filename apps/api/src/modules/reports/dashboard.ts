@@ -14,10 +14,12 @@ const ACTION_LABEL: Record<string, string> = {
 };
 export const ENTITY_LABEL: Record<string, string> = {
   Asset: 'aset', Item: 'master barang', Procurement: 'pengadaan', GoodsReceipt: 'penerimaan', AssetMutation: 'mutasi', Loan: 'peminjaman', Maintenance: 'pemeliharaan',
+  PROCUREMENT: 'pengadaan', MUTATION: 'mutasi', LOAN: 'peminjaman', MAINTENANCE: 'pemeliharaan', STOCK_ADJUSTMENT: 'penyesuaian stok', DISPOSAL: 'penghapusan',
   Disposal: 'penghapusan', StockOpname: 'stock opname', StockAdjustment: 'penyesuaian stok', StockTransaction: 'transaksi stok', User: 'pengguna', Role: 'role', Report: 'laporan',
 };
 export const describeAudit = (action: string, entityType: string, after: unknown) => {
-  const number = (after as { number?: string } | null)?.number;
+  const a = after as { number?: string; documentNumber?: string; code?: string } | null;
+  const number = a?.number ?? a?.documentNumber ?? a?.code;
   return `${ACTION_LABEL[action] ?? action.toLowerCase()} ${ENTITY_LABEL[entityType] ?? entityType.toLowerCase()}${number ? ` ${number}` : ''}`;
 };
 

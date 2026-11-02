@@ -32,7 +32,7 @@ export function RequirePermission({ permission, children }: { permission: string
 /** Arahkan "/" ke halaman pertama yang boleh dibuka pengguna. */
 export function HomeRedirect() {
   const { can } = useAuth();
-  const first = NAV.flatMap((g) => g.items).find((i) => can(i.permission));
+  const first = NAV.flatMap((g) => g.items).find((i) => i.to !== '/' && can(i.permission));
   if (!first) {
     return (
       <div role="alert" className="mx-auto max-w-md py-20 text-center">

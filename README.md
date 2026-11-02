@@ -48,6 +48,7 @@ node e2e/tahap2.cjs   # autentikasi, pengguna, role, master data
 node e2e/tahap3.cjs   # barang, aset, QR, foto, persediaan, scan (butuh ffmpeg untuk kamera palsu)
 node e2e/tahap4.cjs   # pengadaan, penerimaan, approval, mutasi, peminjaman, penyesuaian, notifikasi (3 pengguna)
 node e2e/tahap5.cjs   # pemeliharaan, penghapusan, stock opname (kamera palsu, offline, verifikasi)
+node e2e/tahap6.cjs   # dashboard, laporan, export XLSX/PDF, audit log
 ```
 
 ### Database test

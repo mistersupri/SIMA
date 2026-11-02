@@ -14,7 +14,7 @@ export async function auditRoutes(app: FastifyInstance) {
     const day = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s) : undefined);
     const to = day(f.to);
     const where: Prisma.AuditLogWhereInput = {
-      ...(f.entityType ? { entityType: f.entityType } : {}), ...(f.action ? { action: f.action } : {}), ...(f.userId && /^[0-9a-f-]{36}$/.test(f.userId) ? { userId: f.userId } : {}),
+      ...(f.entityType ? { entityType: { in: f.entityType.split(',').slice(0, 10) } } : {}), ...(f.action ? { action: f.action } : {}), ...(f.userId && /^[0-9a-f-]{36}$/.test(f.userId) ? { userId: f.userId } : {}),
       ...(f.entityId ? { entityId: f.entityId } : {}),
       ...(day(f.from) || to ? { createdAt: { gte: day(f.from), lt: to ? new Date(to.getTime() + 86400000) : undefined } } : {}),
       ...(q.search ? { OR: [{ action: { contains: q.search, mode: 'insensitive' } }, { entityType: { contains: q.search, mode: 'insensitive' } }, { entityId: { contains: q.search, mode: 'insensitive' } }] } : {}),
@@ -27,6 +27,9 @@ export async function auditRoutes(app: FastifyInstance) {
 
   app.get('/audit-logs/options', { preHandler: requirePermission('audit.view') }, async () => {
     const [actions, entities] = await Promise.all([prisma.auditLog.findMany({ distinct: ['action'], select: { action: true }, orderBy: { action: 'asc' } }), prisma.auditLog.findMany({ distinct: ['entityType'], select: { entityType: true }, orderBy: { entityType: 'asc' } })]);
-    return ok({ actions: actions.map((a) => a.action), entities: entities.map((e) => ({ key: e.entityType, label: ENTITY_LABEL[e.entityType] ?? e.entityType })) });
+    // Jenis objek yang berlabel sama (misal Procurement dan PROCUREMENT) digabung menjadi satu pilihan.
+    const grouped = new Map<string, string[]>();
+    for (const e of entities) { const label = ENTITY_LABEL[e.entityType] ?? e.entityType; grouped.set(label, [...(grouped.get(label) ?? []), e.entityType]); }
+    return ok({ actions: actions.map((a) => a.action), entities: [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([label, keys]) => ({ key: keys.join(','), label })) });
   });
 }

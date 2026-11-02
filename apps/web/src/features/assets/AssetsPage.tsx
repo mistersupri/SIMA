@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -101,7 +101,9 @@ function RegisterDialog({ open, onClose }: { open: boolean; onClose: () => void 
 export function AssetsPage() {
   const { can } = useAuth();
   const navigate = useNavigate();
-  const list = useListState({ sortBy: 'code' });
+  const [params] = useSearchParams();
+  // Tautan dari dashboard membawa filter awal (kondisi/status).
+  const list = useListState({ sortBy: 'code', filters: { condition: params.get('condition') ?? '', status: params.get('status') ?? '' } });
   const [registering, setRegistering] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const s = list.state;

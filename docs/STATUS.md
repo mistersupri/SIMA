@@ -1,7 +1,7 @@
 # Status fitur SIMA
 
 Hanya fitur yang sudah dijalankan dan diuji yang ditandai selesai.
-Terakhir diperbarui: Tahap 5.
+Terakhir diperbarui: Tahap 6.
 
 ## Selesai dan teruji
 
@@ -72,6 +72,18 @@ Batasan Tahap 4: approval satu langkah (struktur tabel mendukung berjenjang, bel
 
 Batasan Tahap 5: aplikasi belum dapat dibuka saat benar-benar offline (service worker/PWA terpasang di Tahap 7; antrean offline bekerja selama halaman sudah terbuka); foto pemeriksaan memerlukan koneksi; barang tidak terdaftar hanya dicatat dan diakui, pendaftaran aset barunya manual; stock opname untuk persediaan (kuantitatif) tidak dicakup, penyesuaian stok memakai alur tersendiri.
 
+## Tahap 6 selesai dan teruji
+
+- [x] Dashboard dari database: 12 kartu statistik yang dapat diklik (drill-down ke daftar terfilter), aset per kategori/kondisi/lokasi, pengadaan disetujui per bulan (12 bulan), pengajuan menunggu keputusan pengguna, aktivitas terbaru; angka dibandingkan dengan hitungan independen di E2E; menghormati pembatasan unit
+- [x] 9 laporan: inventaris, persediaan (saldo + pergerakan periode), kondisi, mutasi, peminjaman (termasuk terlambat), pemeliharaan, pengadaan per periode, penghapusan, stock opname; filter tanggal/tahun/kategori/lokasi (termasuk sub-lokasi)/unit/kondisi/status; paginasi server dan ringkasan
+- [x] Export XLSX (ExcelJS: header bertema, tipe angka/uang/tanggal, filter otomatis, ringkasan) dan PDF (pdfkit: multi-halaman, header berulang, nomor halaman); tombol Cetak; export dibatasi `reports.export` atau izin modul dan tercatat di audit log
+- [x] Audit log viewer (read-only; filter objek, aksi, tanggal, pencarian; rincian sebelum/sesudah); tabel append-only di database
+- [x] 117 test backend + 3 test frontend + E2E: tahap2 (35), tahap3 (43), tahap4 (45), tahap5 (41), tahap6 (39)
+
+Bug yang ditemukan pengujian tahap ini dan diperbaiki: kartu kondisi dashboard ikut menghitung aset dihapuskan (filter status tertimpa); opsi filter audit log berlabel ganda; ringkasan aktivitas memakai nama entitas mentah.
+
+Batasan Tahap 6: tombol Cetak mencetak halaman yang sedang tampil (untuk seluruh data gunakan PDF); export dibatasi 20.000 baris; teks PDF memakai font bawaan (karakter di luar Latin-1 diganti `?`); diagram dibuat dengan SVG sederhana (tanpa pustaka grafik); laporan kartu stok per barang ada di halaman Persediaan, belum berupa export.
+
 ## Belum dikerjakan
 
-Dashboard, laporan (rekap, kartu stok, mutasi, peminjaman, opname) dengan export XLSX/PDF/cetak, import Excel (template, preview, validasi, saldo awal), service worker PWA, Docker deployment, backup/restore, dokumentasi API, manual pengguna, audit log viewer, pengaturan aplikasi.
+Import Excel (template, preview, validasi per baris, saldo awal sebagai transaksi pembukaan), service worker PWA (pemasangan dan shell offline), pengaturan aplikasi (identitas instansi), Docker deployment (Dockerfile, compose produksi, reverse proxy HTTPS), backup/restore terjadwal dan teruji, dokumentasi API, manual pengguna, dan penyisiran keamanan akhir.

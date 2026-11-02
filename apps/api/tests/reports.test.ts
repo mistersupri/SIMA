@@ -201,6 +201,12 @@ describe('audit log', () => {
     const opt = (await call('GET', '/audit-logs/options', { session: viewer })).body.data;
     expect(opt.actions).toContain('CREATE');
     expect(opt.entities.map((e: any) => e.key)).toContain('Asset');
+    const labels = opt.entities.map((e: any) => e.label);
+    expect(new Set(labels).size).toBe(labels.length); // tidak ada opsi berlabel ganda
+    const proc = opt.entities.find((e: any) => e.label === 'pengadaan');
+    expect(proc.key.split(',')).toEqual(expect.arrayContaining(['Procurement', 'PROCUREMENT']));
+    const merged = await call('GET', `/audit-logs?entityType=${proc.key}&limit=100`, { session: viewer });
+    expect(new Set(merged.body.data.map((r: any) => r.entityType))).toEqual(new Set(['Procurement', 'PROCUREMENT']));
   });
 
   it('tidak dapat dimodifikasi lewat API maupun database', async () => {

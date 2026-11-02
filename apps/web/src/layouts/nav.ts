@@ -1,4 +1,4 @@
-import { ArrowRightLeft, ClipboardList, Trash2, Wrench, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { BarChart3, FileSpreadsheet, LayoutDashboard, ScrollText, ArrowRightLeft, ClipboardList, Trash2, Wrench, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -16,6 +16,7 @@ export interface NavGroup {
 
 // Hanya halaman yang benar-benar ada. Menu baru ditambahkan bersama modulnya.
 export const NAV: NavGroup[] = [
+  { title: 'Ringkasan', items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', match: '/' }] },
   {
     title: 'Inventaris',
     items: [
@@ -53,6 +54,20 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    title: 'Laporan',
+    items: [
+      { to: '/laporan/assets', label: 'Inventaris', icon: BarChart3, permission: 'reports.view', match: '/laporan/assets' },
+      { to: '/laporan/stocks', label: 'Persediaan', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/stocks' },
+      { to: '/laporan/conditions', label: 'Kondisi', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/conditions' },
+      { to: '/laporan/mutations', label: 'Mutasi', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/mutations' },
+      { to: '/laporan/loans', label: 'Peminjaman', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/loans' },
+      { to: '/laporan/maintenances', label: 'Pemeliharaan', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/maintenances' },
+      { to: '/laporan/procurements', label: 'Pengadaan', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/procurements' },
+      { to: '/laporan/disposals', label: 'Penghapusan', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/disposals' },
+      { to: '/laporan/stock-opnames', label: 'Stock Opname', icon: FileSpreadsheet, permission: 'reports.view', match: '/laporan/stock-opnames' },
+    ],
+  },
+  {
     title: 'Persetujuan',
     items: [
       { to: '/persetujuan/menunggu', label: 'Menunggu Persetujuan', icon: ClipboardCheck, permission: 'approvals.view', match: '/persetujuan/menunggu' },
@@ -64,6 +79,7 @@ export const NAV: NavGroup[] = [
     items: [
       { to: '/pengaturan/pengguna', label: 'Pengguna', icon: Users, permission: 'users.view', match: '/pengaturan/pengguna' },
       { to: '/pengaturan/role', label: 'Role dan Permission', icon: ShieldCheck, permission: 'roles.view', match: '/pengaturan/role' },
+      { to: '/pengaturan/audit-log', label: 'Audit Log', icon: ScrollText, permission: 'audit.view', match: '/pengaturan/audit-log' },
       { to: '/master/organizational-units', label: 'Master Data', icon: Database, permission: 'master.view', match: '/master' },
     ],
   },

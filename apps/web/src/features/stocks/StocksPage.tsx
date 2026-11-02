@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,7 +97,8 @@ function MovementDialog({ mode, onClose }: { mode: 'IN' | 'OUT' | null; onClose:
 }
 
 function BalanceTab() {
-  const list = useListState({ sortBy: 'name' });
+  const [params] = useSearchParams();
+  const list = useListState({ sortBy: 'name', filters: { belowMin: params.get('belowMin') === 'true' ? 'true' : '' } });
   const s = list.state;
   const warehouses = useOptions('/warehouses');
   const query = useQuery({

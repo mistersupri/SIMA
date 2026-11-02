@@ -10,14 +10,14 @@ export interface ListState {
 }
 
 /** State daftar sisi-server: pencarian di-debounce 300 ms dan mereset halaman. */
-export function useListState(defaults: { sortBy?: string; sortOrder?: 'asc' | 'desc'; limit?: number } = {}) {
+export function useListState(defaults: { sortBy?: string; sortOrder?: 'asc' | 'desc'; limit?: number; filters?: Record<string, string> } = {}) {
   const [state, setState] = useState<ListState>({
     page: 1,
     limit: defaults.limit ?? 20,
     search: '',
     sortBy: defaults.sortBy,
     sortOrder: defaults.sortOrder ?? 'asc',
-    filters: {},
+    filters: defaults.filters ?? {},
   });
   const [searchInput, setSearchInput] = useState('');
 

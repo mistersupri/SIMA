@@ -3,6 +3,10 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from '@/lib/auth';
 import { AppLayout } from '@/layouts/AppLayout';
 import { HomeRedirect, RequireAuth, RequirePermission } from '@/features/auth/guards';
+import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { ReportsPage } from '@/features/reports/ReportsPage';
+import { AuditLogPage } from '@/features/audit/AuditLogPage';
+import { useAuth } from '@/lib/auth';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage';
 import { UsersPage } from '@/features/users/UsersPage';
@@ -37,6 +41,11 @@ import { OpnamesPage } from '@/features/opnames/OpnamesPage';
 import { OpnameDetailPage } from '@/features/opnames/OpnameDetailPage';
 import { OpnameScanPage } from '@/features/opnames/OpnameScanPage';
 
+function Home() {
+  const { can } = useAuth();
+  return can('dashboard.view') ? <DashboardPage /> : <HomeRedirect />;
+}
+
 function NotFound() {
   return (
     <div className="py-20 text-center">
@@ -55,7 +64,9 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/ganti-password" element={<ChangePasswordPage />} />
             <Route element={<AppLayout />}>
-              <Route index element={<HomeRedirect />} />
+              <Route index element={<Home />} />
+              <Route path="/laporan/:key" element={<RequirePermission permission="reports.view"><ReportsPage /></RequirePermission>} />
+              <Route path="/pengaturan/audit-log" element={<RequirePermission permission="audit.view"><AuditLogPage /></RequirePermission>} />
               <Route path="/barang" element={<RequirePermission permission="items.view"><ItemsPage /></RequirePermission>} />
               <Route path="/aset" element={<RequirePermission permission="assets.view"><AssetsPage /></RequirePermission>} />
               <Route path="/aset/cetak-qr" element={<RequirePermission permission="assets.print_qr"><QrPrintPage /></RequirePermission>} />
