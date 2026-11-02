@@ -18,7 +18,8 @@
     "db:deploy": "pnpm --filter @sima/api db:deploy",
     "db:seed": "pnpm --filter @sima/api db:seed",
     "db:reset": "pnpm --filter @sima/api db:reset",
-    "db:studio": "pnpm --filter @sima/api db:studio"
+    "db:studio": "pnpm --filter @sima/api db:studio",
+    "docs:api": "pnpm --filter @sima/api docs:api"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

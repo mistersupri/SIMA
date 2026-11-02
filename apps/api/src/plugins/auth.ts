@@ -141,13 +141,13 @@ export async function authenticate(req: FastifyRequest) {
 
 /** preHandler: pengguna harus memiliki SEMUA permission yang disebutkan (diperiksa di server). */
 export function requirePermission(...codes: string[]) {
-  return [
-    authenticate,
-    async (req: FastifyRequest) => {
-      const have = req.auth!.permissions;
-      if (!codes.every((c) => have.has(c))) throw forbidden();
-    },
-  ];
+  const check = async (req: FastifyRequest) => {
+    const have = req.auth!.permissions;
+    if (!codes.every((c) => have.has(c))) throw forbidden();
+  };
+  // Metadata untuk inventaris route (dokumentasi API dan uji otomatis cakupan otorisasi).
+  (check as unknown as { requiredPermissions: string[] }).requiredPermissions = codes;
+  return [authenticate, check];
 }
 
 export function currentUser(req: FastifyRequest): AuthContext {

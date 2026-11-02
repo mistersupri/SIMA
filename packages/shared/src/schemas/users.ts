@@ -43,3 +43,11 @@ export interface UserListItem {
   lastLoginAt: string | null;
   createdAt: string;
 }
+
+export const organizationSchema = z.object({
+  name: requiredText('Nama instansi', 150),
+  address: z.string().trim().max(300).nullish().transform((v) => v || null),
+  phone: z.string().trim().max(40).nullish().transform((v) => v || null),
+  email: z.string().trim().toLowerCase().nullish().transform((v) => v || null).pipe(z.string().email('Format email tidak valid').nullable()),
+});
+export type OrganizationInput = z.infer<typeof organizationSchema>;

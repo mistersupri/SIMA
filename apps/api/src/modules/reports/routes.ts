@@ -53,7 +53,8 @@ export async function reportRoutes(app: FastifyInstance) {
     const format = q.format === 'pdf' ? 'pdf' : 'xlsx';
     const filters = filterSchema.parse(q);
     const result = await def.fetch(filters, auth);
-    const meta = { title: def.title, filterText: filterText(filters), generatedBy: auth.user.name, generatedAt: new Date() };
+    const org = await prisma.organization.findFirst({ select: { name: true } });
+    const meta = { title: def.title, filterText: `${org ? `${org.name}. ` : ''}${filterText(filters)}`, generatedBy: auth.user.name, generatedAt: new Date() };
     const file = format === 'pdf' ? await buildPdf(def.columns, result, meta) : await buildXlsx(def.columns, result, meta);
     await writeAudit(prisma, req, { action: 'EXPORT', entityType: 'Report', entityId: key, after: { format, rows: result.rows.length, filters } });
     return reply

@@ -12,6 +12,7 @@ import { userRoutes } from './modules/users/routes';
 import { roleRoutes } from './modules/roles/routes';
 import { masterRoutes } from './modules/master/routes';
 import { Prisma } from '@prisma/client';
+import { collectRoutes, type RouteInfo } from './docs/routes';
 import multipart from '@fastify/multipart';
 import { itemRoutes } from './modules/items/routes';
 import { assetRoutes } from './modules/assets/routes';
@@ -28,6 +29,7 @@ import { opnameRoutes } from './modules/opnames/routes';
 import { reportRoutes } from './modules/reports/routes';
 import { auditRoutes } from './modules/audit/routes';
 import { importRoutes } from './modules/imports/routes';
+import { settingsRoutes } from './modules/settings/routes';
 import { stockAdjustmentRoutes } from './modules/stocks/adjustments';
 
 /** Label Bahasa Indonesia untuk kolom yang bisa bentrok pada unique constraint. */
@@ -43,7 +45,7 @@ const FIELD_LABEL: Record<string, string> = {
   assetId: 'Aset',
 };
 
-export async function buildApp(env: Env) {
+export async function buildApp(env: Env, opts: { inventory?: RouteInfo[] } = {}) {
   const app = Fastify({
     logger:
       env.NODE_ENV === 'test'
@@ -57,6 +59,7 @@ export async function buildApp(env: Env) {
     bodyLimit: 2 * 1024 * 1024,
   });
 
+  if (opts.inventory) collectRoutes(app, opts.inventory);
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cookie, { secret: env.SESSION_SECRET });
   // Batas per sesi login (bukan per IP) agar banyak pengguna di balik satu NAT tidak saling menghambat.
@@ -132,6 +135,7 @@ export async function buildApp(env: Env) {
       await api.register(reportRoutes);
       await api.register(auditRoutes);
       await api.register(importRoutes);
+      await api.register(settingsRoutes);
       await api.register(stockAdjustmentRoutes);
     },
     { prefix: '/api/v1' },
