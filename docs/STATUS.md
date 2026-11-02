@@ -1,7 +1,7 @@
 # Status fitur SIMA
 
 Hanya fitur yang sudah dijalankan dan diuji yang ditandai selesai.
-Terakhir diperbarui: Tahap 4.
+Terakhir diperbarui: Tahap 5.
 
 ## Selesai dan teruji
 
@@ -60,7 +60,18 @@ Bug yang ditemukan E2E dan diperbaiki pada tahap ini: pemilih aset menampilkan h
 
 Batasan Tahap 4: approval satu langkah (struktur tabel mendukung berjenjang, belum ada UI untuk mengatur alur); pembatasan kewenangan approver per unit belum diberlakukan (kewenangan = role + permission); notifikasi hanya di dalam aplikasi (tanpa email); pengeluaran stok langsung tanpa persetujuan.
 
+## Tahap 5 selesai dan teruji
+
+- [x] Pemeliharaan dan perbaikan: lapor, ajukan, setujui, mulai perbaikan (aset otomatis Dalam perbaikan, tidak bisa dipinjam/dimutasi), selesaikan dengan tindakan, biaya, dan kondisi akhir; satu aset satu pemeliharaan terbuka; riwayat perbaikan
+- [x] Penghapusan aset: ajukan, setujui, finalisasi atomik. Aset berstatus Dihapuskan, tidak ada baris yang dihapus, seluruh histori utuh, QR tetap menampilkan identitas, aset tidak dapat dipinjam/dimutasi/dipelihara/diedit lagi
+- [x] Stock opname: sesi per lokasi (termasuk sub-lokasi) dan/atau unit, snapshot daftar aset saat dimulai, petugas pemeriksa, scan QR (kamera atau manual) dengan hasil Sesuai / Tidak sesuai / Tidak ditemukan / Belum diperiksa / Barang tidak terdaftar, foto pemeriksaan (privat), pengajuan hasil, verifikasi per temuan (terapkan/tolak) oleh orang yang bukan pembuat sesi atau petugas lapangan
+- [x] Master aset berubah hanya setelah keputusan Terapkan pada verifikasi (lokasi, kondisi, status Tidak ditemukan/pulih), dengan histori OPNAME
+- [x] Offline untuk pemeriksaan fisik: catatan disimpan di perangkat bila jaringan putus, disinkronkan otomatis saat online lewat endpoint batch idempoten (`clientId`), konflik ditampilkan untuk ditinjau; server memvalidasi ulang setiap catatan
+- [x] Komponen pemindai kamera dipakai bersama halaman Scan QR dan halaman periksa
+- [x] 103 test backend + 3 test frontend + E2E: tahap2 (35), tahap3 (43), tahap4 (45), tahap5 (41)
+
+Batasan Tahap 5: aplikasi belum dapat dibuka saat benar-benar offline (service worker/PWA terpasang di Tahap 7; antrean offline bekerja selama halaman sudah terbuka); foto pemeriksaan memerlukan koneksi; barang tidak terdaftar hanya dicatat dan diakui, pendaftaran aset barunya manual; stock opname untuk persediaan (kuantitatif) tidak dicakup, penyesuaian stok memakai alur tersendiri.
+
 ## Belum dikerjakan
 
-Pemeliharaan, penghapusan, stock opname, dashboard, laporan, import/export, PWA/offline, Docker deployment, backup/restore, dokumentasi API dan manual pengguna.
-Dashboard belum ada; setelah login pengguna diarahkan ke halaman pertama yang diizinkan.
+Dashboard, laporan (rekap, kartu stok, mutasi, peminjaman, opname) dengan export XLSX/PDF/cetak, import Excel (template, preview, validasi, saldo awal), service worker PWA, Docker deployment, backup/restore, dokumentasi API, manual pengguna, audit log viewer, pengaturan aplikasi.

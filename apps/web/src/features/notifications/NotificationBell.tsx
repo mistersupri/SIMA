@@ -15,6 +15,7 @@ function targetOf(n: Notif): string | null {
   if (!n.entityType || !n.entityId) return null;
   if (n.entityType === 'ITEM') return `/persediaan/${n.entityId}`;
   if (n.entityType === 'GOODS_RECEIPT') return '/penerimaan';
+  if (n.entityType === 'STOCK_OPNAME') return `/opname/${n.entityId}`;
   if (['PROCUREMENT', 'MUTATION', 'LOAN', 'MAINTENANCE', 'STOCK_ADJUSTMENT', 'DISPOSAL'].includes(n.entityType)) return approvalEntityPath(n.entityType as ApprovalEntityType, n.entityId);
   return null;
 }

@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { ArrowRightLeft, ClipboardList, Trash2, Wrench, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -32,6 +32,24 @@ export const NAV: NavGroup[] = [
       { to: '/penerimaan', label: 'Penerimaan Barang', icon: PackageCheck, permission: 'goods_receipts.view', match: '/penerimaan' },
       { to: '/mutasi', label: 'Mutasi', icon: ArrowRightLeft, permission: 'mutations.view', match: '/mutasi' },
       { to: '/peminjaman', label: 'Peminjaman', icon: HandCoins, permission: 'loans.view', match: '/peminjaman' },
+    ],
+  },
+  {
+    title: 'Pemeliharaan',
+    items: [
+      { to: '/pemeliharaan', label: 'Data Pemeliharaan', icon: Wrench, permission: 'maintenances.view', match: '/pemeliharaan' },
+      { to: '/perbaikan/riwayat', label: 'Riwayat Perbaikan', icon: History, permission: 'maintenances.view', match: '/perbaikan/riwayat' },
+    ],
+  },
+  {
+    title: 'Pemeriksaan',
+    items: [{ to: '/opname', label: 'Stock Opname', icon: ClipboardList, permission: 'stock_opnames.view', match: '/opname' }],
+  },
+  {
+    title: 'Penghapusan',
+    items: [
+      { to: '/penghapusan', label: 'Pengajuan', icon: Trash2, permission: 'disposals.view', match: '/penghapusan' },
+      { to: '/penghapusan-riwayat', label: 'Riwayat Penghapusan', icon: History, permission: 'disposals.view', match: '/penghapusan-riwayat' },
     ],
   },
   {

@@ -24,6 +24,9 @@ interface Props<T extends { id: string }> {
   searchPlaceholder: string;
   emptyTitle: string;
   extraActions?: ReactNode;
+  /** Parameter tetap pada setiap permintaan (misalnya history=true untuk halaman riwayat). */
+  fixedParams?: Record<string, string>;
+  hideStatusFilter?: boolean;
 }
 
 /** Halaman daftar dokumen transaksi: pencarian, filter status, sort, dan paginasi dari server. */
@@ -32,8 +35,8 @@ export function DocListPage<T extends { id: string }>(p: Props<T>) {
   const list = useListState({ sortBy: 'createdAt', sortOrder: 'desc' });
   const s = list.state;
   const query = useQuery({
-    queryKey: [p.queryKey, s],
-    queryFn: ({ signal }) => api.get<T[]>(`${p.path}${buildQuery({ page: s.page, limit: s.limit, search: s.search, sortBy: s.sortBy, sortOrder: s.sortOrder, ...s.filters })}`, signal),
+    queryKey: [p.queryKey, s, p.fixedParams],
+    queryFn: ({ signal }) => api.get<T[]>(`${p.path}${buildQuery({ page: s.page, limit: s.limit, search: s.search, sortBy: s.sortBy, sortOrder: s.sortOrder, ...s.filters, ...p.fixedParams })}`, signal),
     placeholderData: keepPreviousData,
   });
   const filtered = !!s.search || Object.values(s.filters).some(Boolean);
@@ -48,10 +51,10 @@ export function DocListPage<T extends { id: string }>(p: Props<T>) {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <Input aria-label="Cari dokumen" placeholder={p.searchPlaceholder} className="pl-9" value={list.searchInput} onChange={(e) => list.setSearchInput(e.target.value)} />
         </div>
-        <Select aria-label="Filter status" className="w-auto" value={s.filters.status ?? ''} onChange={(e) => list.setFilter('status', e.target.value)}>
+        {!p.hideStatusFilter && <Select aria-label="Filter status" className="w-auto" value={s.filters.status ?? ''} onChange={(e) => list.setFilter('status', e.target.value)}>
           <option value="">Semua status</option>
           {Object.entries(p.statusLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </Select>
+        </Select>}
       </div>
       <DataTable
         caption={p.title} columns={p.columns} rows={query.data?.data} rowKey={(r) => r.id}

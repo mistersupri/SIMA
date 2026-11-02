@@ -151,7 +151,7 @@ export async function opnameRoutes(app: FastifyInstance) {
     const f = req.query as Record<string, string | undefined>;
     const where: Prisma.StockOpnameDetailWhereInput = {
       opnameId: id,
-      ...(f.result && ['MATCH', 'MISMATCH', 'NOT_FOUND', 'NOT_CHECKED', 'UNREGISTERED'].includes(f.result) ? { result: f.result as never } : {}),
+      ...(f.findings === 'true' ? { result: { in: [...DECISION_REQUIRED] } } : f.result && ['MATCH', 'MISMATCH', 'NOT_FOUND', 'NOT_CHECKED', 'UNREGISTERED'].includes(f.result) ? { result: f.result as never } : {}),
       ...(q.search ? { OR: [{ scannedCode: { contains: q.search, mode: 'insensitive' } }, { asset: { code: { contains: q.search, mode: 'insensitive' } } }, { asset: { item: { name: { contains: q.search, mode: 'insensitive' } } } }] } : {}),
     };
     const [rows, total] = await Promise.all([

@@ -24,7 +24,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <p className="mb-1.5 px-3 text-xs font-medium text-slate-300">{g.title}</p>
           <ul className="flex flex-col gap-0.5">
             {g.items.map((i) => {
-              const active = pathname.startsWith(i.match);
+              const active = pathname === i.match || pathname.startsWith(`${i.match}/`);
               return (
                 <li key={i.to}>
                   <NavLink

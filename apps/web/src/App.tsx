@@ -27,6 +27,15 @@ import { MutationDetailPage } from '@/features/mutations/MutationDetailPage';
 import { LoansPage } from '@/features/loans/LoansPage';
 import { LoanFormPage } from '@/features/loans/LoanFormPage';
 import { LoanDetailPage } from '@/features/loans/LoanDetailPage';
+import { MaintenancesPage } from '@/features/maintenances/MaintenancesPage';
+import { MaintenanceFormPage } from '@/features/maintenances/MaintenanceFormPage';
+import { MaintenanceDetailPage } from '@/features/maintenances/MaintenanceDetailPage';
+import { DisposalsPage } from '@/features/disposals/DisposalsPage';
+import { DisposalFormPage } from '@/features/disposals/DisposalFormPage';
+import { DisposalDetailPage } from '@/features/disposals/DisposalDetailPage';
+import { OpnamesPage } from '@/features/opnames/OpnamesPage';
+import { OpnameDetailPage } from '@/features/opnames/OpnameDetailPage';
+import { OpnameScanPage } from '@/features/opnames/OpnameScanPage';
 
 function NotFound() {
   return (
@@ -67,6 +76,19 @@ export function App() {
               <Route path="/peminjaman/baru" element={<RequirePermission permission="loans.create"><LoanFormPage /></RequirePermission>} />
               <Route path="/peminjaman/:id" element={<RequirePermission permission="loans.view"><LoanDetailPage /></RequirePermission>} />
               <Route path="/peminjaman/:id/ubah" element={<RequirePermission permission="loans.create"><LoanFormPage /></RequirePermission>} />
+              <Route path="/pemeliharaan" element={<RequirePermission permission="maintenances.view"><MaintenancesPage /></RequirePermission>} />
+              <Route path="/pemeliharaan/baru" element={<RequirePermission permission="maintenances.create"><MaintenanceFormPage /></RequirePermission>} />
+              <Route path="/pemeliharaan/:id" element={<RequirePermission permission="maintenances.view"><MaintenanceDetailPage /></RequirePermission>} />
+              <Route path="/pemeliharaan/:id/ubah" element={<RequirePermission permission="maintenances.create"><MaintenanceFormPage /></RequirePermission>} />
+              <Route path="/perbaikan/riwayat" element={<RequirePermission permission="maintenances.view"><MaintenancesPage history /></RequirePermission>} />
+              <Route path="/penghapusan" element={<RequirePermission permission="disposals.view"><DisposalsPage /></RequirePermission>} />
+              <Route path="/penghapusan/baru" element={<RequirePermission permission="disposals.create"><DisposalFormPage /></RequirePermission>} />
+              <Route path="/penghapusan/:id" element={<RequirePermission permission="disposals.view"><DisposalDetailPage /></RequirePermission>} />
+              <Route path="/penghapusan/:id/ubah" element={<RequirePermission permission="disposals.create"><DisposalFormPage /></RequirePermission>} />
+              <Route path="/penghapusan-riwayat" element={<RequirePermission permission="disposals.view"><DisposalsPage history /></RequirePermission>} />
+              <Route path="/opname" element={<RequirePermission permission="stock_opnames.view"><OpnamesPage /></RequirePermission>} />
+              <Route path="/opname/:id" element={<RequirePermission permission="stock_opnames.view"><OpnameDetailPage /></RequirePermission>} />
+              <Route path="/opname/:id/periksa" element={<RequirePermission permission="stock_opnames.scan"><OpnameScanPage /></RequirePermission>} />
               <Route path="/persetujuan" element={<Navigate to="/persetujuan/menunggu" replace />} />
               <Route path="/persetujuan/menunggu" element={<RequirePermission permission="approvals.view"><ApprovalsPage mode="pending" /></RequirePermission>} />
               <Route path="/persetujuan/riwayat" element={<RequirePermission permission="approvals.view"><ApprovalsPage mode="history" /></RequirePermission>} />
