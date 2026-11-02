@@ -111,3 +111,78 @@ export const DOC_STATUS_LABEL = { DRAFT: 'Draft', PENDING_APPROVAL: 'Menunggu pe
 /** Rute UI untuk dokumen yang diminta persetujuan (dipakai tautan notifikasi dan daftar persetujuan). */
 export const approvalEntityPath = (type: ApprovalEntityType, id: string) =>
   ({ PROCUREMENT: `/pengadaan/${id}`, MUTATION: `/mutasi/${id}`, LOAN: `/peminjaman/${id}`, MAINTENANCE: `/pemeliharaan/${id}`, STOCK_ADJUSTMENT: '/persediaan/penyesuaian', DISPOSAL: `/penghapusan/${id}` })[type];
+
+// ---------------------------------------------------------------- pemeliharaan
+
+export const MAINTENANCE_TYPES = ['PREVENTIVE', 'CORRECTIVE'] as const;
+export const MAINTENANCE_TYPE_LABEL = { PREVENTIVE: 'Pencegahan', CORRECTIVE: 'Perbaikan' } as const;
+export const MAINTENANCE_STATUS_LABEL = {
+  REPORTED: 'Dilaporkan', PENDING_APPROVAL: 'Menunggu persetujuan', APPROVED: 'Disetujui', IN_PROGRESS: 'Dalam perbaikan',
+  COMPLETED: 'Selesai', REJECTED: 'Ditolak', CANCELLED: 'Dibatalkan',
+} as const;
+
+export const maintenanceSchema = z.object({
+  assetId: uuid('Aset'),
+  date: dateField,
+  type: z.enum(MAINTENANCE_TYPES, { error: 'Jenis pemeliharaan wajib dipilih' }),
+  damageDescription: requiredText('Deskripsi kerusakan/keperluan', 1000),
+  vendorId: optionalUuid('Vendor'),
+  performerName: optionalText('Pelaksana', 150),
+});
+export type MaintenanceInput = z.infer<typeof maintenanceSchema>;
+
+export const maintenanceCompleteSchema = z.object({
+  actionTaken: requiredText('Tindakan perbaikan', 1000),
+  cost: z.coerce.number({ error: 'Biaya harus berupa angka' }).min(0, 'Biaya tidak boleh negatif').max(999_999_999_999, 'Biaya terlalu besar').default(0),
+  resultingCondition: z.enum(ASSET_CONDITIONS, { error: 'Kondisi setelah perbaikan wajib dipilih' }),
+});
+
+// ---------------------------------------------------------------- penghapusan
+
+export const DISPOSAL_METHODS = ['SOLD', 'DESTROYED', 'GRANTED', 'TRANSFERRED', 'OTHER'] as const;
+export const DISPOSAL_METHOD_LABEL = { SOLD: 'Dijual', DESTROYED: 'Dimusnahkan', GRANTED: 'Dihibahkan', TRANSFERRED: 'Dialihkan', OTHER: 'Lainnya' } as const;
+
+export const disposalSchema = z.object({
+  date: dateField,
+  reason: requiredText('Alasan penghapusan', 1000),
+  method: z.enum(DISPOSAL_METHODS, { error: 'Cara penghapusan wajib dipilih' }),
+  lines: z.array(z.object({ assetId: uuid('Aset'), notes: optionalText('Catatan', 300) }))
+    .min(1, 'Pilih minimal satu aset').max(100, 'Maksimal 100 aset').superRefine(noDuplicates('assetId', 'Aset yang sama muncul lebih dari sekali')),
+});
+export type DisposalInput = z.infer<typeof disposalSchema>;
+
+// ---------------------------------------------------------------- stock opname
+
+export const OPNAME_STATUS_LABEL = { DRAFT: 'Draft', IN_PROGRESS: 'Sedang diperiksa', SUBMITTED: 'Menunggu verifikasi', VERIFIED: 'Terverifikasi', CANCELLED: 'Dibatalkan' } as const;
+export const OPNAME_RESULTS = ['MATCH', 'MISMATCH', 'NOT_FOUND', 'NOT_CHECKED', 'UNREGISTERED'] as const;
+export const OPNAME_RESULT_LABEL = { MATCH: 'Sesuai', MISMATCH: 'Tidak sesuai', NOT_FOUND: 'Tidak ditemukan', NOT_CHECKED: 'Belum diperiksa', UNREGISTERED: 'Barang tidak terdaftar' } as const;
+
+export const opnameSchema = z.object({
+  title: requiredText('Judul', 200),
+  periodStart: dateField,
+  periodEnd: dateField,
+  locationId: optionalUuid('Lokasi'),
+  unitId: optionalUuid('Unit kerja'),
+  notes: optionalText('Catatan', 500),
+  assigneeIds: z.array(uuid('Petugas')).min(1, 'Tetapkan minimal satu petugas pemeriksa').max(20),
+}).refine((v) => v.periodEnd >= v.periodStart, { path: ['periodEnd'], message: 'Periode berakhir tidak boleh sebelum mulai' })
+  .refine((v) => v.locationId || v.unitId, { path: ['locationId'], message: 'Tentukan lokasi atau unit kerja yang diperiksa' });
+export type OpnameInput = z.infer<typeof opnameSchema>;
+
+/** Satu catatan hasil pemeriksaan. `clientId` dibuat perangkat agar sinkronisasi ulang tidak menggandakan data. */
+export const opnameScanSchema = z.object({
+  clientId: z.string().uuid('ID perangkat tidak valid'),
+  clientRecordedAt: z.string().datetime({ offset: true }).optional(),
+  code: requiredText('Kode aset', 100),
+  foundLocationId: optionalUuid('Lokasi ditemukan'),
+  foundCondition: z.enum(ASSET_CONDITIONS).nullish().transform((v) => v ?? null),
+  notes: optionalText('Catatan', 500),
+});
+export type OpnameScanInput = z.infer<typeof opnameScanSchema>;
+export const opnameSyncSchema = z.object({ records: z.array(opnameScanSchema).min(1).max(500) });
+
+export const opnameSubmitSchema = z.object({ markUncheckedAsNotFound: z.boolean().default(false) });
+export const opnameVerifySchema = z.object({
+  note: optionalText('Catatan verifikasi', 500),
+  decisions: z.array(z.object({ detailId: uuid('Detail'), decision: z.enum(['APPLY', 'REJECT'], { error: 'Keputusan wajib dipilih' }) })).default([]),
+});
