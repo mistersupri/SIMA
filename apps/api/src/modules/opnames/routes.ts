@@ -21,7 +21,7 @@ export function parseAssetCode(raw: string) {
   return decodeURIComponent(m ? m[1]! : raw).trim().toUpperCase();
 }
 
-async function locationTreeIds(rootId: string) {
+export async function locationTreeIds(rootId: string) {
   const ids = [rootId];
   for (let frontier = [rootId]; frontier.length;) {
     const kids = await prisma.location.findMany({ where: { parentId: { in: frontier } }, select: { id: true } });
