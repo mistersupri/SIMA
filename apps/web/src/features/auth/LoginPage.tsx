@@ -6,10 +6,12 @@ import { loginSchema, type LoginInput } from '@sima/shared';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
+import { useOrganizationName } from '@/lib/app-info';
 import { Field, Input } from '@/components/ui/form';
 
 export function LoginPage() {
   const { user, login } = useAuth();
+  const org = useOrganizationName();
   const navigate = useNavigate();
   const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
   const [serverError, setServerError] = useState<string | null>(null);
@@ -32,6 +34,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-semibold text-navy">SIMA</h1>
         <p className="mt-1 text-sm text-muted">Sistem Informasi Manajemen Inventaris Barang</p>
+        {org && <p className="mt-0.5 text-sm font-medium text-ink">{org}</p>}
 
         <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-4 rounded-card border border-line bg-surface p-5">
           <h2 className="text-base font-semibold">Masuk ke akun Anda</h2>

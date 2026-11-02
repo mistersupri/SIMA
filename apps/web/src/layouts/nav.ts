@@ -1,4 +1,4 @@
-import { FileUp, BarChart3, FileSpreadsheet, LayoutDashboard, ScrollText, ArrowRightLeft, ClipboardList, Trash2, Wrench, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { FileUp, BarChart3, FileSpreadsheet, LayoutDashboard, ScrollText, ArrowRightLeft, ClipboardList, Trash2, Wrench, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon, Settings } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -80,6 +80,7 @@ export const NAV: NavGroup[] = [
       { to: '/pengaturan/pengguna', label: 'Pengguna', icon: Users, permission: 'users.view', match: '/pengaturan/pengguna' },
       { to: '/pengaturan/role', label: 'Role dan Permission', icon: ShieldCheck, permission: 'roles.view', match: '/pengaturan/role' },
       { to: '/impor', label: 'Impor Excel', icon: FileUp, permission: 'items.import', match: '/impor' },
+      { to: '/pengaturan/aplikasi', label: 'Pengaturan Aplikasi', icon: Settings, permission: 'settings.manage', match: '/pengaturan/aplikasi' },
       { to: '/pengaturan/audit-log', label: 'Audit Log', icon: ScrollText, permission: 'audit.view', match: '/pengaturan/audit-log' },
       { to: '/master/organizational-units', label: 'Master Data', icon: Database, permission: 'master.view', match: '/master' },
     ],

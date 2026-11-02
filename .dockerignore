@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+.git
+.env
+.env.*
+storage
+backups
+e2e
+docs
+*.log

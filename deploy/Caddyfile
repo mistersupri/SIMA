@@ -1,0 +1,19 @@
+# TLS otomatis (Let's Encrypt) untuk {$DOMAIN}. Untuk jaringan internal tanpa domain publik
+# set DOMAIN=localhost atau gunakan `tls internal` (sertifikat CA lokal Caddy).
+{$DOMAIN:localhost} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	request_body {
+		max_size 12MB
+	}
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:3001
+	}
+	handle {
+		reverse_proxy web:80
+	}
+}

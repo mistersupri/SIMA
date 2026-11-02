@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { NAV } from './nav';
+import { useOrganizationName } from '@/lib/app-info';
 import { NotificationBell } from '@/features/notifications/NotificationBell';
 
 function initials(name: string) {
@@ -49,12 +50,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-const Brand = () => (
-  <Link to="/" className="flex h-14 items-center gap-3 px-5 text-white">
-    <span className="text-lg font-semibold tracking-tight">SIMA</span>
-    <span className="text-xs text-slate-300">Inventaris Barang</span>
-  </Link>
-);
+function Brand() {
+  const org = useOrganizationName();
+  return (
+    <Link to="/" className="flex h-14 min-w-0 items-center gap-3 px-5 text-white">
+      <span className="text-lg font-semibold tracking-tight">SIMA</span>
+      <span className="truncate text-xs text-slate-300" title={org ?? undefined}>{org ?? 'Inventaris Barang'}</span>
+    </Link>
+  );
+}
 
 interface InstallEvent extends Event { prompt: () => Promise<void> }
 

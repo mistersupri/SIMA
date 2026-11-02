@@ -8,6 +8,7 @@ import { ReportsPage } from '@/features/reports/ReportsPage';
 import { AuditLogPage } from '@/features/audit/AuditLogPage';
 import { ImportPage } from '@/features/imports/ImportPage';
 import { useAuth } from '@/lib/auth';
+import { AppSettingsPage } from '@/features/settings/AppSettingsPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage';
 import { UsersPage } from '@/features/users/UsersPage';
@@ -68,6 +69,7 @@ export function App() {
               <Route index element={<Home />} />
               <Route path="/laporan/:key" element={<RequirePermission permission="reports.view"><ReportsPage /></RequirePermission>} />
               <Route path="/impor" element={<RequirePermission permission="items.import"><ImportPage /></RequirePermission>} />
+              <Route path="/pengaturan/aplikasi" element={<RequirePermission permission="settings.manage"><AppSettingsPage /></RequirePermission>} />
               <Route path="/pengaturan/audit-log" element={<RequirePermission permission="audit.view"><AuditLogPage /></RequirePermission>} />
               <Route path="/barang" element={<RequirePermission permission="items.view"><ItemsPage /></RequirePermission>} />
               <Route path="/aset" element={<RequirePermission permission="assets.view"><AssetsPage /></RequirePermission>} />

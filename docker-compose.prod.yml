@@ -1,0 +1,106 @@
+# Deployment produksi SIMA. Hanya Caddy yang membuka port ke luar (80/443).
+#   cp .env.production.example .env   # lalu isi nilai GANTI
+#   docker compose -f docker-compose.prod.yml up -d --build
+name: sima
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sima}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi}
+      POSTGRES_DB: ${POSTGRES_DB:-sima}
+      TZ: Asia/Jakarta
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sima}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sima}?schema=public
+      APP_URL: ${APP_URL:?APP_URL wajib diisi}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET wajib diisi}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+      COOKIE_SECURE: 'true'
+      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-5}
+      LOGIN_LOCK_MINUTES: ${LOGIN_LOCK_MINUTES:-15}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      STORAGE_DIR: /data/storage
+      ORG_CODE: ${ORG_CODE:-INSTANSI}
+      ORG_NAME: ${ORG_NAME:-Nama Instansi}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?BOOTSTRAP_ADMIN_EMAIL wajib diisi}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Super Admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?BOOTSTRAP_ADMIN_PASSWORD wajib diisi}
+    volumes:
+      - storage:/data/storage
+    networks: [internal]
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api, web]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+
+  # Backup terjadwal ke ./backups (di host). Pulihkan dengan deploy/restore.sh (lihat docs/BACKUP-RESTORE.md).
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ['/scripts/backup-loop.sh']
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-sima}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-sima}
+      STORAGE_DIR: /data/storage
+      BACKUP_DIR: /backups
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      KEEP_DAILY: ${KEEP_DAILY:-7}
+      KEEP_WEEKLY: ${KEEP_WEEKLY:-4}
+      TZ: Asia/Jakarta
+    volumes:
+      - storage:/data/storage:ro
+      - ./backups:/backups
+      - ./deploy:/scripts:ro
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:
