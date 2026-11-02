@@ -6,6 +6,7 @@ import { HomeRedirect, RequireAuth, RequirePermission } from '@/features/auth/gu
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { ReportsPage } from '@/features/reports/ReportsPage';
 import { AuditLogPage } from '@/features/audit/AuditLogPage';
+import { ImportPage } from '@/features/imports/ImportPage';
 import { useAuth } from '@/lib/auth';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage';
@@ -66,6 +67,7 @@ export function App() {
             <Route element={<AppLayout />}>
               <Route index element={<Home />} />
               <Route path="/laporan/:key" element={<RequirePermission permission="reports.view"><ReportsPage /></RequirePermission>} />
+              <Route path="/impor" element={<RequirePermission permission="items.import"><ImportPage /></RequirePermission>} />
               <Route path="/pengaturan/audit-log" element={<RequirePermission permission="audit.view"><AuditLogPage /></RequirePermission>} />
               <Route path="/barang" element={<RequirePermission permission="items.view"><ItemsPage /></RequirePermission>} />
               <Route path="/aset" element={<RequirePermission permission="assets.view"><AssetsPage /></RequirePermission>} />
