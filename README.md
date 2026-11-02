@@ -1,7 +1,27 @@
 # SIMA, Sistem Informasi Manajemen Inventaris Barang
 
 Aplikasi inventaris internal satu instansi: barang inventaris individual (QR Code per unit) dan barang persediaan (stock ledger), dengan approval workflow dan audit log.
-Spesifikasi lengkap ada di PRD/SRS; status pengerjaan ada di [`docs/STATUS.md`](docs/STATUS.md). Arah desain: [`DESIGN.md`](DESIGN.md).
+Spesifikasi lengkap ada di PRD/SRS. Dokumentasi:
+
+| Dokumen | Isi |
+|---|---|
+| [`docs/MANUAL-PENGGUNA.md`](docs/MANUAL-PENGGUNA.md) | Panduan pengguna per peran dan alur kerja |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deployment produksi dengan Docker + HTTPS |
+| [`docs/BACKUP-RESTORE.md`](docs/BACKUP-RESTORE.md) | Backup terjadwal dan pemulihan |
+| [`docs/API.md`](docs/API.md) | Dokumentasi API (dibuat otomatis dari route) |
+| [`docs/KEAMANAN.md`](docs/KEAMANAN.md) | Kontrol keamanan, hasil audit dependensi, batasan |
+| [`docs/FITUR.md`](docs/FITUR.md) | Daftar fitur selesai dan belum |
+| [`docs/STATUS.md`](docs/STATUS.md) | Catatan pengerjaan dan pengujian per tahap |
+| [`DESIGN.md`](DESIGN.md) | Arah desain antarmuka |
+
+## Deployment produksi (ringkas)
+
+```bash
+cp .env.production.example .env      # isi semua nilai GANTI
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Caddy mengurus HTTPS otomatis; migrasi dan seed berjalan saat container API start; backup terjadwal ke `./backups`. Langkah lengkap: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Prasyarat
 
@@ -34,6 +54,7 @@ Login awal: `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` dari `.env`. Ga
 | `pnpm test` | Test otomatis (butuh database `*_test`, lihat `.env.test`) |
 | `pnpm typecheck` | Typecheck semua paket |
 | `pnpm build` | Build produksi |
+| `pnpm docs:api` | Buat ulang `docs/API.md` dari route (tes gagal bila file ini usang) |
 | `pnpm db:up` / `db:down` | Nyalakan/hentikan PostgreSQL (Docker) |
 | `pnpm db:migrate` | Buat migrasi baru saat mengubah `schema.prisma` |
 | `pnpm db:seed` | Seed ulang (idempoten) |
@@ -50,10 +71,12 @@ node e2e/tahap4.cjs   # pengadaan, penerimaan, approval, mutasi, peminjaman, pen
 node e2e/tahap5.cjs   # pemeliharaan, penghapusan, stock opname (kamera palsu, offline, verifikasi)
 node e2e/tahap6.cjs   # dashboard, laporan, export XLSX/PDF, audit log
 node e2e/tahap7.cjs   # import Excel (template, preview, kesalahan, commit, saldo awal)
+# tahap8 (pengaturan instansi + CSP produksi) juga memakai build produksi, lihat di bawah
 
 # PWA diuji terhadap build produksi (service worker tidak aktif di dev server):
 pnpm --filter @sima/web build && (cd apps/web && pnpm exec vite preview --port 4173 &)
-node e2e/tahap7-pwa.cjs
+node e2e/tahap7-pwa.cjs   # PWA offline
+node e2e/tahap8.cjs       # pengaturan instansi; aplikasi dijalankan dengan CSP produksi dari deploy/security-headers.conf
 ```
 
 ### Database test
@@ -74,5 +97,7 @@ apps/api         Fastify + Prisma (modular monolith, /api/v1)
 apps/web         React + Vite + Tailwind
 packages/shared  Permission, role, tipe respons, skema Zod bersama
 scripts          dev.mjs, db.mjs
+deploy           Dockerfile, nginx, Caddyfile, skrip backup/restore
 docs             Dokumentasi
+e2e              Skrip E2E Playwright
 ```

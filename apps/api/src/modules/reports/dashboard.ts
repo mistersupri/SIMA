@@ -15,7 +15,7 @@ const ACTION_LABEL: Record<string, string> = {
 export const ENTITY_LABEL: Record<string, string> = {
   Asset: 'aset', Item: 'master barang', Procurement: 'pengadaan', GoodsReceipt: 'penerimaan', AssetMutation: 'mutasi', Loan: 'peminjaman', Maintenance: 'pemeliharaan',
   PROCUREMENT: 'pengadaan', MUTATION: 'mutasi', LOAN: 'peminjaman', MAINTENANCE: 'pemeliharaan', STOCK_ADJUSTMENT: 'penyesuaian stok', DISPOSAL: 'penghapusan',
-  Disposal: 'penghapusan', StockOpname: 'stock opname', StockAdjustment: 'penyesuaian stok', StockTransaction: 'transaksi stok', User: 'pengguna', Role: 'role', Report: 'laporan',
+  Disposal: 'penghapusan', StockOpname: 'stock opname', StockAdjustment: 'penyesuaian stok', StockTransaction: 'transaksi stok', User: 'pengguna', Role: 'role', Report: 'laporan', Organization: 'identitas instansi',
 };
 export const describeAudit = (action: string, entityType: string, after: unknown) => {
   const a = after as { number?: string; documentNumber?: string; code?: string } | null;

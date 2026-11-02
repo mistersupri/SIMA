@@ -52,7 +52,7 @@ describe.skipIf(!hasPgTools)('backup dan restore (skrip deploy/backup.sh dan res
     expect(r.status, r.stderr + r.stdout).toBe(0);
     const dirs = spawnSync('sh', ['-c', `ls -1d ${backups}/sima-*`], { encoding: 'utf8' }).stdout.trim().split('\n');
     expect(dirs).toHaveLength(1);
-    backupPath = dirs[0];
+    backupPath = dirs[0]!;
     for (const f of ['db.dump', 'storage.tar.gz', 'SHA256SUMS', 'MANIFEST']) expect(existsSync(path.join(backupPath, f))).toBe(true);
     expect(spawnSync('sha256sum', ['-c', 'SHA256SUMS'], { cwd: backupPath }).status).toBe(0);
   });
