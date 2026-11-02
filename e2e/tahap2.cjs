@@ -43,8 +43,9 @@ const check = (name, ok, extra='') => { results.push([ok?'PASS':'FAIL', name, ex
   await page.getByLabel(/^Password baru/).fill('Admin-Baru-98765');
   await page.getByLabel('Ulangi password baru').fill('Admin-Baru-98765');
   await page.getByRole('button', { name: 'Simpan password' }).click();
-  await page.waitForURL('**/pengaturan/pengguna');
-  check('setelah ganti password masuk ke halaman Pengguna', true);
+  await page.waitForURL((u) => !/ganti-password|login/.test(u.pathname));
+  check('setelah ganti password masuk ke halaman utama (menu pertama yang diizinkan)', true);
+  await page.goto(base + '/pengaturan/pengguna');
   await page.getByRole('cell', { name: /Super Admin/ }).first().waitFor();
   await page.screenshot({ path: OUT+'/03-users.png' });
 

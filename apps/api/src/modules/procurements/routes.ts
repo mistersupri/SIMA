@@ -21,7 +21,7 @@ const EDITABLE = ['DRAFT', 'REJECTED'] as const;
 const listInclude = { vendor: { select: { id: true, name: true } }, _count: { select: { details: true } } } satisfies Prisma.ProcurementInclude;
 const detailInclude = {
   vendor: true, fundingSource: true,
-  details: { include: { item: { select: { id: true, code: true, name: true, type: true, unitOfMeasure: { select: { name: true } } } } }, orderBy: { id: 'asc' } },
+  details: { include: { item: { select: { id: true, code: true, name: true, type: true, unitOfMeasure: { select: { name: true } } } } }, orderBy: { item: { name: 'asc' } } },
   receipts: { select: { id: true, number: true, status: true, receivedDate: true }, orderBy: { createdAt: 'desc' } },
 } satisfies Prisma.ProcurementInclude;
 

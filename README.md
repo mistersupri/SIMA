@@ -41,11 +41,12 @@ Login awal: `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` dari `.env`. Ga
 
 ### E2E browser
 
-Skrip di `e2e/` memakai Playwright (Chromium). Jalankan stack (`pnpm dev`) di atas database **kosong yang baru di-seed**, lalu:
+Skrip di `e2e/` memakai Playwright (Chromium). Jalankan stack (`pnpm dev`) di atas database **kosong yang baru di-seed**, lalu (jalankan API dengan `LOGIN_RATE_LIMIT_PER_MIN=1000` karena E2E login berulang):
 
 ```bash
 node e2e/tahap2.cjs   # autentikasi, pengguna, role, master data
 node e2e/tahap3.cjs   # barang, aset, QR, foto, persediaan, scan (butuh ffmpeg untuk kamera palsu)
+node e2e/tahap4.cjs   # pengadaan, penerimaan, approval, mutasi, peminjaman, penyesuaian, notifikasi (3 pengguna)
 ```
 
 ### Database test

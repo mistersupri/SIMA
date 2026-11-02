@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { NAV } from './nav';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
@@ -91,7 +92,8 @@ export function AppLayout() {
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Buka menu" onClick={() => setDrawer(true)}>
             <MenuIcon className="size-5" aria-hidden />
           </Button>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
             <Menu.Root>
               <Menu.Trigger asChild>
                 <button

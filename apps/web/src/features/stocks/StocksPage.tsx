@@ -184,6 +184,7 @@ export function StocksPage() {
         title="Persediaan"
         description="Saldo dihitung dari ledger. Setiap perubahan stok menghasilkan transaksi yang tidak dapat diubah."
         actions={<>
+          {can('stock_adjustments.view') && <Button asChild variant="ghost"><Link to="/persediaan/penyesuaian">Penyesuaian stok</Link></Button>}
           {can('stocks.in') && <Button onClick={() => setMove('IN')}><ArrowDownToLine className="size-4" aria-hidden /> Barang masuk</Button>}
           {can('stocks.out') && <Button variant="secondary" onClick={() => setMove('OUT')}><ArrowUpFromLine className="size-4" aria-hidden /> Barang keluar</Button>}
         </>}

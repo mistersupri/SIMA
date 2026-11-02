@@ -1,7 +1,7 @@
 # Status fitur SIMA
 
 Hanya fitur yang sudah dijalankan dan diuji yang ditandai selesai.
-Terakhir diperbarui: Tahap 3.
+Terakhir diperbarui: Tahap 4.
 
 ## Selesai dan teruji
 
@@ -42,7 +42,25 @@ Bug yang ditemukan E2E dan diperbaiki: nomor seri yang diketik hilang diam-diam 
 
 Batasan Tahap 3: penyesuaian stok dan saldo awal lewat import menunggu approval (Tahap 4) dan import (Tahap 7); cetak kartu inventaris berbentuk PDF menunggu Tahap 7; perpindahan lokasi aset hanya lewat mutasi (Tahap 4).
 
+## Tahap 4 selesai dan teruji
+
+- [x] Mesin approval: satu langkah (role Approver atau Super Admin + permission `<modul>.approve/.reject`), keputusan hanya sekali (serentak aman), penolakan wajib beralasan, dokumen ditolak dapat diperbaiki dan diajukan ulang, tarik pengajuan saat dibatalkan
+- [x] Pemisahan tugas ditegakkan di server: pengaju dan pembuat dokumen tidak dapat menyetujui/menolak, termasuk Super Admin
+- [x] Dokumen yang sudah diajukan/disetujui tidak dapat diedit langsung (422)
+- [x] Pengadaan (draft, ajukan, setujui/tolak, batal) dan penerimaan barang: unit aset dan stok baru lahir hanya saat penerimaan dikonfirmasi; konfirmasi atomik (gagal satu baris, tidak ada yang tersimpan); verifikator harus petugas lain (Super Admin boleh); penerimaan sebagian; status pengadaan Diterima sebagian / Selesai
+- [x] Mutasi aset: lokasi/unit/penanggung jawab berubah hanya setelah disetujui, pemindahan dicatat, dan konfirmasi selesai; satu aset tidak bisa ada di dua mutasi terbuka; konfirmasi atomik; histori lokasi
+- [x] Peminjaman: draft, ajukan (mengunci aset lewat partial unique index), setujui, serah terima (status Dipinjam), pengembalian dengan kondisi aktual (boleh sebagian), pinjam ganda ditolak termasuk saat serentak, aset diperbaiki/dihapuskan/diarsipkan tidak bisa dipinjam, sweep keterlambatan terjadwal + pengingat jatuh tempo
+- [x] Penyesuaian stok via persetujuan: saldo berubah hanya setelah disetujui dan dicatat sebagai transaksi ADJUSTMENT; gagal bila membuat stok negatif
+- [x] Notifikasi internal: persetujuan diperlukan/disetujui/ditolak, penerimaan, mutasi selesai, peminjaman terlambat/jatuh tempo/kembali, stok menipis (sekali per barang per hari); bersifat pribadi
+- [x] UI: lonceng notifikasi, Menunggu/Riwayat Persetujuan, Pengadaan (daftar, form, detail), Penerimaan Barang, Mutasi, Peminjaman, Penyesuaian stok, pemilih aset dengan pencarian di server
+- [x] Rate limit global per sesi login (bukan per IP) dengan pesan Indonesia
+- [x] 94 test backend + 3 test frontend + E2E browser: tahap2 (35), tahap3 (43), tahap4 (45)
+
+Bug yang ditemukan E2E dan diperbaiki pada tahap ini: pemilih aset menampilkan hasil lama saat mengetik cepat (bisa salah pilih); halaman detail melebar di layar ponsel (grid mengikuti lebar tabel); `ConfirmDialog` menghasilkan unhandled rejection saat aksi gagal; urutan rincian pengadaan acak (UUID); batas laju per IP menghambat banyak pengguna di satu NAT.
+
+Batasan Tahap 4: approval satu langkah (struktur tabel mendukung berjenjang, belum ada UI untuk mengatur alur); pembatasan kewenangan approver per unit belum diberlakukan (kewenangan = role + permission); notifikasi hanya di dalam aplikasi (tanpa email); pengeluaran stok langsung tanpa persetujuan.
+
 ## Belum dikerjakan
 
-Pengadaan, penerimaan, approval, penyesuaian stok, mutasi, peminjaman, pemeliharaan, penghapusan, stock opname, dashboard, laporan, import/export, PWA/offline, Docker deployment, backup/restore, dokumentasi API dan manual pengguna.
+Pemeliharaan, penghapusan, stock opname, dashboard, laporan, import/export, PWA/offline, Docker deployment, backup/restore, dokumentasi API dan manual pengguna.
 Dashboard belum ada; setelah login pengguna diarahkan ke halaman pertama yang diizinkan.

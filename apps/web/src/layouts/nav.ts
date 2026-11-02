@@ -1,4 +1,4 @@
-import { Boxes, Database, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { ArrowRightLeft, Boxes, ClipboardCheck, Database, HandCoins, History, PackageCheck, ReceiptText, Package, ScanLine, ShieldCheck, Users, Warehouse, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -23,6 +23,22 @@ export const NAV: NavGroup[] = [
       { to: '/aset', label: 'Aset', icon: Boxes, permission: 'assets.view', match: '/aset' },
       { to: '/scan', label: 'Scan QR', icon: ScanLine, permission: 'assets.view', match: '/scan' },
       { to: '/persediaan', label: 'Persediaan', icon: Warehouse, permission: 'stocks.view', match: '/persediaan' },
+    ],
+  },
+  {
+    title: 'Transaksi',
+    items: [
+      { to: '/pengadaan', label: 'Pengadaan', icon: ReceiptText, permission: 'procurements.view', match: '/pengadaan' },
+      { to: '/penerimaan', label: 'Penerimaan Barang', icon: PackageCheck, permission: 'goods_receipts.view', match: '/penerimaan' },
+      { to: '/mutasi', label: 'Mutasi', icon: ArrowRightLeft, permission: 'mutations.view', match: '/mutasi' },
+      { to: '/peminjaman', label: 'Peminjaman', icon: HandCoins, permission: 'loans.view', match: '/peminjaman' },
+    ],
+  },
+  {
+    title: 'Persetujuan',
+    items: [
+      { to: '/persetujuan/menunggu', label: 'Menunggu Persetujuan', icon: ClipboardCheck, permission: 'approvals.view', match: '/persetujuan/menunggu' },
+      { to: '/persetujuan/riwayat', label: 'Riwayat Persetujuan', icon: History, permission: 'approvals.view', match: '/persetujuan/riwayat' },
     ],
   },
   {

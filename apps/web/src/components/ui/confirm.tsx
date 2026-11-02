@@ -29,7 +29,9 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
             disabled={busy}
             onClick={async () => {
               setBusy(true);
-              try { await onConfirm(); onOpenChange(false); } finally { setBusy(false); }
+              try { await onConfirm(); onOpenChange(false); }
+              catch { /* pemanggil sudah menampilkan galat; dialog tetap terbuka agar pengguna bisa mencoba lagi atau batal */ }
+              finally { setBusy(false); }
             }}
           >
             {busy ? 'Memproses…' : confirmLabel}

@@ -100,7 +100,7 @@ export async function mutationRoutes(app: FastifyInstance) {
     const creator = await prisma.user.findUnique({ where: { id: m.createdById }, select: { name: true } });
     return ok({
       ...m, createdByName: creator?.name ?? '-', approval: await approvalTimeline('MUTATION', id),
-      details: m.details.map((d) => ({ id: d.id, asset: d.asset, from: { unit: n.u.get(d.fromUnitId), location: n.l.get(d.fromLocationId), person: d.fromPersonId ? n.p.get(d.fromPersonId) : null }, to: { unit: n.u.get(d.toUnitId), location: n.l.get(d.toLocationId), person: d.toPersonId ? n.p.get(d.toPersonId) : null } })),
+      details: m.details.map((d) => ({ id: d.id, asset: d.asset, toUnitId: d.toUnitId, toLocationId: d.toLocationId, toPersonId: d.toPersonId, from: { unit: n.u.get(d.fromUnitId), location: n.l.get(d.fromLocationId), person: d.fromPersonId ? n.p.get(d.fromPersonId) : null }, to: { unit: n.u.get(d.toUnitId), location: n.l.get(d.toLocationId), person: d.toPersonId ? n.p.get(d.toPersonId) : null } })),
     });
   });
 

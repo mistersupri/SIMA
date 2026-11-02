@@ -15,7 +15,9 @@ let lastPage = null;
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' :: ' + extra : ''}`); };
 const lab = (scope, text) => scope.getByLabel(new RegExp(`^${text}( \\*)?$`));
 async function pick(select, text) {
-  const value = await select.locator('option', { hasText: text }).first().getAttribute('value');
+  const option = select.locator('option', { hasText: text }).first();
+  await option.waitFor({ state: 'attached' });
+  const value = await option.getAttribute('value');
   await select.selectOption(value);
 }
 const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');

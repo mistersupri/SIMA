@@ -15,6 +15,18 @@ import { QrPrintPage } from '@/features/assets/QrPrintPage';
 import { ScanPage, QrResolvePage } from '@/features/scan/ScanPage';
 import { StocksPage } from '@/features/stocks/StocksPage';
 import { StockCardPage } from '@/features/stocks/StockCardPage';
+import { AdjustmentsPage } from '@/features/stocks/AdjustmentsPage';
+import { ApprovalsPage } from '@/features/approvals/ApprovalsPage';
+import { ProcurementsPage } from '@/features/procurements/ProcurementsPage';
+import { ProcurementFormPage } from '@/features/procurements/ProcurementFormPage';
+import { ProcurementDetailPage } from '@/features/procurements/ProcurementDetailPage';
+import { ReceiptsPage } from '@/features/procurements/ReceiptsPage';
+import { MutationsPage } from '@/features/mutations/MutationsPage';
+import { MutationFormPage } from '@/features/mutations/MutationFormPage';
+import { MutationDetailPage } from '@/features/mutations/MutationDetailPage';
+import { LoansPage } from '@/features/loans/LoansPage';
+import { LoanFormPage } from '@/features/loans/LoanFormPage';
+import { LoanDetailPage } from '@/features/loans/LoanDetailPage';
 
 function NotFound() {
   return (
@@ -41,6 +53,23 @@ export function App() {
               <Route path="/aset/:id" element={<RequirePermission permission="assets.view"><AssetDetailPage /></RequirePermission>} />
               <Route path="/scan" element={<RequirePermission permission="assets.view"><ScanPage /></RequirePermission>} />
               <Route path="/q/:code" element={<RequirePermission permission="assets.view"><QrResolvePage /></RequirePermission>} />
+              <Route path="/persediaan/penyesuaian" element={<RequirePermission permission="stock_adjustments.view"><AdjustmentsPage /></RequirePermission>} />
+              <Route path="/pengadaan" element={<RequirePermission permission="procurements.view"><ProcurementsPage /></RequirePermission>} />
+              <Route path="/pengadaan/baru" element={<RequirePermission permission="procurements.create"><ProcurementFormPage /></RequirePermission>} />
+              <Route path="/pengadaan/:id" element={<RequirePermission permission="procurements.view"><ProcurementDetailPage /></RequirePermission>} />
+              <Route path="/pengadaan/:id/ubah" element={<RequirePermission permission="procurements.update"><ProcurementFormPage /></RequirePermission>} />
+              <Route path="/penerimaan" element={<RequirePermission permission="goods_receipts.view"><ReceiptsPage /></RequirePermission>} />
+              <Route path="/mutasi" element={<RequirePermission permission="mutations.view"><MutationsPage /></RequirePermission>} />
+              <Route path="/mutasi/baru" element={<RequirePermission permission="mutations.create"><MutationFormPage /></RequirePermission>} />
+              <Route path="/mutasi/:id" element={<RequirePermission permission="mutations.view"><MutationDetailPage /></RequirePermission>} />
+              <Route path="/mutasi/:id/ubah" element={<RequirePermission permission="mutations.create"><MutationFormPage /></RequirePermission>} />
+              <Route path="/peminjaman" element={<RequirePermission permission="loans.view"><LoansPage /></RequirePermission>} />
+              <Route path="/peminjaman/baru" element={<RequirePermission permission="loans.create"><LoanFormPage /></RequirePermission>} />
+              <Route path="/peminjaman/:id" element={<RequirePermission permission="loans.view"><LoanDetailPage /></RequirePermission>} />
+              <Route path="/peminjaman/:id/ubah" element={<RequirePermission permission="loans.create"><LoanFormPage /></RequirePermission>} />
+              <Route path="/persetujuan" element={<Navigate to="/persetujuan/menunggu" replace />} />
+              <Route path="/persetujuan/menunggu" element={<RequirePermission permission="approvals.view"><ApprovalsPage mode="pending" /></RequirePermission>} />
+              <Route path="/persetujuan/riwayat" element={<RequirePermission permission="approvals.view"><ApprovalsPage mode="history" /></RequirePermission>} />
               <Route path="/persediaan" element={<RequirePermission permission="stocks.view"><StocksPage /></RequirePermission>} />
               <Route path="/persediaan/:itemId" element={<RequirePermission permission="stocks.view"><StockCardPage /></RequirePermission>} />
               <Route path="/pengaturan/pengguna" element={<RequirePermission permission="users.view"><UsersPage /></RequirePermission>} />

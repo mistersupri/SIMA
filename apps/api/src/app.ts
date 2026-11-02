@@ -53,7 +53,15 @@ export async function buildApp(env: Env) {
 
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cookie, { secret: env.SESSION_SECRET });
-  await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute' });
+  // Batas per sesi login (bukan per IP) agar banyak pengguna di balik satu NAT tidak saling menghambat.
+  // Permintaan tanpa sesi (login, health) dibatasi per IP.
+  await app.register(rateLimit, {
+    global: true,
+    max: 600,
+    timeWindow: '1 minute',
+    keyGenerator: (req) => (req.cookies?.sima_sid ? `s:${req.cookies.sima_sid.slice(0, 24)}` : `ip:${req.ip}`),
+    errorResponseBuilder: (_req, ctx) => new AppError(429, `Terlalu banyak permintaan. Coba lagi dalam ${Math.ceil(ctx.ttl / 1000)} detik.`, 'RATE_LIMITED'),
+  });
   await app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024, files: 1, fields: 5 } });
   await authPlugin(app, env);
 
