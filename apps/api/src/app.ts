@@ -27,6 +27,7 @@ import { disposalRoutes } from './modules/disposals/routes';
 import { opnameRoutes } from './modules/opnames/routes';
 import { reportRoutes } from './modules/reports/routes';
 import { auditRoutes } from './modules/audit/routes';
+import { importRoutes } from './modules/imports/routes';
 import { stockAdjustmentRoutes } from './modules/stocks/adjustments';
 
 /** Label Bahasa Indonesia untuk kolom yang bisa bentrok pada unique constraint. */
@@ -130,6 +131,7 @@ export async function buildApp(env: Env) {
       await api.register(opnameRoutes);
       await api.register(reportRoutes);
       await api.register(auditRoutes);
+      await api.register(importRoutes);
       await api.register(stockAdjustmentRoutes);
     },
     { prefix: '/api/v1' },
