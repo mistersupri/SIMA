@@ -49,6 +49,11 @@ node e2e/tahap3.cjs   # barang, aset, QR, foto, persediaan, scan (butuh ffmpeg u
 node e2e/tahap4.cjs   # pengadaan, penerimaan, approval, mutasi, peminjaman, penyesuaian, notifikasi (3 pengguna)
 node e2e/tahap5.cjs   # pemeliharaan, penghapusan, stock opname (kamera palsu, offline, verifikasi)
 node e2e/tahap6.cjs   # dashboard, laporan, export XLSX/PDF, audit log
+node e2e/tahap7.cjs   # import Excel (template, preview, kesalahan, commit, saldo awal)
+
+# PWA diuji terhadap build produksi (service worker tidak aktif di dev server):
+pnpm --filter @sima/web build && (cd apps/web && pnpm exec vite preview --port 4173 &)
+node e2e/tahap7-pwa.cjs
 ```
 
 ### Database test

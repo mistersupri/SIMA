@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Menu from '@radix-ui/react-dropdown-menu';
-import { KeyRound, LogOut, Menu as MenuIcon, X } from 'lucide-react';
+import { CloudOff, Download, KeyRound, LogOut, Menu as MenuIcon, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -56,8 +56,33 @@ const Brand = () => (
   </Link>
 );
 
+interface InstallEvent extends Event { prompt: () => Promise<void> }
+
+function useOnline() {
+  const [online, setOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true), off = () => setOnline(false);
+    window.addEventListener('online', on); window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+  return online;
+}
+
+function useInstallPrompt() {
+  const [event, setEvent] = useState<InstallEvent | null>(null);
+  useEffect(() => {
+    const h = (e: Event) => { e.preventDefault(); setEvent(e as InstallEvent); };
+    window.addEventListener('beforeinstallprompt', h);
+    window.addEventListener('appinstalled', () => setEvent(null));
+    return () => window.removeEventListener('beforeinstallprompt', h);
+  }, []);
+  return event;
+}
+
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const online = useOnline();
+  const installEvent = useInstallPrompt();
   const navigate = useNavigate();
   const [drawer, setDrawer] = useState(false);
 
@@ -114,6 +139,11 @@ export function AppLayout() {
                 <Menu.Content align="end" sideOffset={6} className="z-50 min-w-52 rounded-card border border-line bg-surface p-1 shadow-lg data-[state=open]:animate-[fade-in_120ms_ease-out]">
                   <div className="px-3 py-2 text-xs text-muted">{user?.email}</div>
                   <Menu.Separator className="my-1 h-px bg-line" />
+                  {installEvent && (
+                    <Menu.Item onSelect={() => void installEvent.prompt()} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 text-sm outline-none data-[highlighted]:bg-wash sm:min-h-9">
+                      <Download className="size-4" aria-hidden /> Pasang aplikasi
+                    </Menu.Item>
+                  )}
                   <Menu.Item onSelect={() => navigate('/ganti-password')} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-control px-3 text-sm outline-none data-[highlighted]:bg-wash sm:min-h-9">
                     <KeyRound className="size-4" aria-hidden /> Ganti password
                   </Menu.Item>
@@ -131,6 +161,12 @@ export function AppLayout() {
             </Menu.Root>
           </div>
         </header>
+        {!online && (
+          <div role="status" className="flex items-center gap-2 border-b border-warning/40 bg-warning-wash px-4 py-2 text-sm text-warning-ink print:hidden lg:px-6">
+            <CloudOff className="size-4 shrink-0" aria-hidden />
+            Anda sedang offline. Halaman yang membutuhkan data terbaru tidak dapat dimuat; pemeriksaan stock opname yang sedang berjalan tetap dapat dilanjutkan dan disinkronkan saat tersambung.
+          </div>
+        )}
         <main className="min-w-0 flex-1 p-4 lg:p-6 print:p-0">
           <Outlet />
         </main>

@@ -20,12 +20,25 @@ interface Recent { code: string; result: keyof typeof OPNAME_RESULT_LABEL | 'QUE
 interface SyncResult { clientId: string; status: 'ok' | 'duplicate' | 'conflict'; message?: string }
 
 const isNetworkError = (e: unknown) => e instanceof ApiError && e.status === 0;
+const metaKey = (id: string) => `sima:opname-meta:${id}`;
+const LOC_KEY = 'sima:locations-options';
+function readJson<T>(key: string): T | null { try { const r = localStorage.getItem(key); return r ? (JSON.parse(r) as T) : null; } catch { return null; } }
+function writeJson(key: string, v: unknown) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* penyimpanan penuh/diblokir */ } }
 
 export function OpnameScanPage() {
   const { id = '' } = useParams();
   const qc = useQueryClient();
-  const locations = useOptions('/locations');
-  const opname = useQuery({ queryKey: ['opname', id], queryFn: async () => (await api.get<Opname>(`/stock-opnames/${id}`)).data, refetchInterval: 20_000 });
+  const locationsQuery = useOptions('/locations');
+  useEffect(() => { if (locationsQuery.data) writeJson(LOC_KEY, locationsQuery.data); }, [locationsQuery.data]);
+  const locations = { data: locationsQuery.data ?? readJson<{ id: string; name: string }[]>(LOC_KEY) ?? undefined };
+  const opnameQuery = useQuery({
+    queryKey: ['opname', id],
+    queryFn: async () => { const d = (await api.get<Opname>(`/stock-opnames/${id}`)).data; writeJson(metaKey(id), d); return d; },
+    refetchInterval: 20_000,
+  });
+  // Offline: pakai salinan terakhir sesi ini agar petugas dapat melanjutkan pemeriksaan.
+  const cachedOpname = isNetworkError(opnameQuery.error) ? readJson<Opname>(metaKey(id)) : null;
+  const opname = cachedOpname ? { ...opnameQuery, data: cachedOpname, error: null, isPending: false } : opnameQuery;
   const [code, setCode] = useState<string | null>(null);
   const [info, setInfo] = useState<Lookup | null>(null);
   const [manual, setManual] = useState('');

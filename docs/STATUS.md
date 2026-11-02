@@ -1,7 +1,7 @@
 # Status fitur SIMA
 
 Hanya fitur yang sudah dijalankan dan diuji yang ditandai selesai.
-Terakhir diperbarui: Tahap 6.
+Terakhir diperbarui: Tahap 7.
 
 ## Selesai dan teruji
 
@@ -84,6 +84,19 @@ Bug yang ditemukan pengujian tahap ini dan diperbaiki: kartu kondisi dashboard i
 
 Batasan Tahap 6: tombol Cetak mencetak halaman yang sedang tampil (untuk seluruh data gunakan PDF); export dibatasi 20.000 baris; teks PDF memakai font bawaan (karakter di luar Latin-1 diganti `?`); diagram dibuat dengan SVG sederhana (tanpa pustaka grafik); laporan kartu stok per barang ada di halaman Persediaan, belum berupa export.
 
+## Tahap 7 selesai dan teruji
+
+- [x] Import Excel untuk 4 jenis: master barang, aset, lokasi, saldo awal persediaan. Template XLSX (lembar Data hanya header, Petunjuk, Referensi kode dari master data), preview dengan nomor baris dan alasan per baris, deteksi duplikat (di file dan di database, termasuk nomor seri), laporan kesalahan XLSX, konfirmasi sebelum commit
+- [x] Aturan commit: baris bermasalah tidak pernah diimpor; commit penuh hanya bila tanpa kesalahan, atau dengan konfirmasi eksplisit "lewati baris bermasalah"; validasi ulang di dalam transaksi (data berubah sejak preview terdeteksi); atomik (gagal satu, tidak ada yang tersimpan); satu kali pakai; kedaluwarsa 24 jam; hanya pembuat batch (atau Super Admin) yang dapat commit; setiap impor tercatat di audit log
+- [x] Saldo awal persediaan dicatat sebagai transaksi OPENING di ledger (tampil "Saldo awal" di kartu stok); ditolak bila barang di gudang itu sudah punya riwayat
+- [x] PWA: manifest (standalone, tema navy), ikon 192/512/maskable, service worker (Workbox) yang hanya menyimpan shell aplikasi; API dan file privat tidak pernah di-cache; pembaruan otomatis; tombol "Pasang aplikasi"
+- [x] Offline: aplikasi dapat dibuka dan dimuat ulang tanpa jaringan; profil tersimpan di perangkat (tanpa token CSRF) hanya untuk menampilkan antarmuka, server tetap memeriksa semua izin; banner offline; halaman periksa stock opname memakai salinan sesi terakhir, menyimpan catatan di perangkat, dan menyinkronkannya otomatis saat online dengan validasi server; logout menghapus profil tersimpan
+- [x] 127 test backend + 3 test frontend + E2E: tahap2 (35), tahap3 (43), tahap4 (45), tahap5 (41), tahap6 (39), tahap7 impor (18), tahap7 PWA (16, terhadap build produksi)
+
+Bug yang ditemukan pengujian tahap ini dan diperbaiki: status batch kedaluwarsa ikut di-rollback karena ditulis di dalam transaksi yang gagal.
+
+Batasan Tahap 7: ikon aplikasi adalah placeholder teks "SIMA" (belum ada logo resmi; ganti berkas di `apps/web/public/icons`); impor hanya .xlsx (bukan CSV), maksimal 5.000 baris per file; merek harus sudah ada di Master Data (tidak dibuat otomatis); impor aset tidak membuat master barang otomatis; foto pemeriksaan stock opname memerlukan koneksi; mutasi, peminjaman, dan persetujuan tidak dapat dilakukan offline (sengaja, sesuai SRS); pengguna yang belum pernah login di perangkat tidak dapat masuk saat offline.
+
 ## Belum dikerjakan
 
-Import Excel (template, preview, validasi per baris, saldo awal sebagai transaksi pembukaan), service worker PWA (pemasangan dan shell offline), pengaturan aplikasi (identitas instansi), Docker deployment (Dockerfile, compose produksi, reverse proxy HTTPS), backup/restore terjadwal dan teruji, dokumentasi API, manual pengguna, dan penyisiran keamanan akhir.
+Pengaturan aplikasi (identitas instansi), Docker deployment (Dockerfile API dan web, compose produksi, reverse proxy HTTPS), backup/restore terjadwal dan teruji, dokumentasi API, manual pengguna, penyisiran keamanan akhir, dan daftar fitur akhir.
