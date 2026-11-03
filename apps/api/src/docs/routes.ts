@@ -10,6 +10,7 @@ export function collectRoutes(app: FastifyInstance, out: RouteInfo[]): void {
     const pre = ([] as unknown[]).concat(r.preHandler ?? []).flat() as (((...a: never[]) => unknown) & { requiredPermissions?: string[] })[];
     const permissions = pre.flatMap((f) => f.requiredPermissions ?? []);
     const auth = pre.includes(authenticate as never) || permissions.length > 0;
+    if (!r.url.startsWith('/api/')) return; // berkas statis web bukan bagian API
     for (const method of methods) out.push({ method, url: r.url, auth, permissions });
   });
 }

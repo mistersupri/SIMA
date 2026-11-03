@@ -14,6 +14,7 @@ import { masterRoutes } from './modules/master/routes';
 import { Prisma } from '@prisma/client';
 import { collectRoutes, type RouteInfo } from './docs/routes';
 import multipart from '@fastify/multipart';
+import { registerWeb } from './plugins/web';
 import { itemRoutes } from './modules/items/routes';
 import { assetRoutes } from './modules/assets/routes';
 import { fileRoutes } from './modules/files/routes';
@@ -68,6 +69,8 @@ export async function buildApp(env: Env, opts: { inventory?: RouteInfo[] } = {})
     global: true,
     max: 600,
     timeWindow: '1 minute',
+    // File statis web tidak dibatasi; batas hanya untuk API.
+    allowList: (req) => !req.url.startsWith('/api/'),
     keyGenerator: (req) => (req.cookies?.sima_sid ? `s:${req.cookies.sima_sid.slice(0, 24)}` : `ip:${req.ip}`),
     errorResponseBuilder: (_req, ctx) => new AppError(429, `Terlalu banyak permintaan. Coba lagi dalam ${Math.ceil(ctx.ttl / 1000)} detik.`, 'RATE_LIMITED'),
   });
@@ -109,9 +112,12 @@ export async function buildApp(env: Env, opts: { inventory?: RouteInfo[] } = {})
     return reply.code(status).send({ success: false, message: err.message });
   });
 
-  app.setNotFoundHandler((_req, reply) =>
-    reply.code(404).send({ success: false, message: 'Endpoint tidak ditemukan' }),
-  );
+  const spaFallback = env.WEB_DIST ? await registerWeb(app, env.WEB_DIST) : null;
+  app.setNotFoundHandler((req, reply) => {
+    const html = spaFallback?.(req);
+    if (html) return reply.code(200).header('cache-control', 'no-cache').type('text/html; charset=utf-8').send(html);
+    return reply.code(404).send({ success: false, message: 'Endpoint tidak ditemukan' });
+  });
 
   await app.register(
     async (api) => {

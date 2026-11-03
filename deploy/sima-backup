@@ -1,0 +1,4 @@
+#!/bin/sh
+# Backup sekarang juga:  docker compose exec sima sima-backup
+. /app/deploy/pgenv.sh
+exec sh /app/deploy/backup.sh

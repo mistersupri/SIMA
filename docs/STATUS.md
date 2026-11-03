@@ -102,7 +102,7 @@ Batasan Tahap 7: ikon aplikasi adalah placeholder teks "SIMA" (belum ada logo re
 - [x] Inventaris route + dokumentasi API otomatis (`pnpm docs:api` → `docs/API.md`, 173 endpoint); tes memastikan file tidak usang
 - [x] Tes keamanan menyisir seluruh route: hanya 5 route publik (whitelist), semua lainnya 401 tanpa login; Viewer 403 di setiap route yang butuh izin yang tak dimilikinya; semua route non-GET menolak tanpa token CSRF; produksi menolak `COOKIE_SECURE=false`/secret contoh; path traversal storage ditolak; respons membawa header keamanan dan tidak membocorkan stack
 - [x] Pengaturan aplikasi: identitas instansi (nama, alamat, telepon, email) hanya untuk Super Admin (`settings.manage`), tercatat di audit log, tampil di login, menu, dan kepala export; endpoint publik `GET /app-info` hanya memuat nama
-- [x] Docker produksi: `Dockerfile.api` (migrate deploy + seed saat start), `Dockerfile.web` (nginx, SPA fallback, CSP, cache aset), `Caddyfile` (HTTPS otomatis), `docker-compose.prod.yml` (db internal, api, web, caddy, backup). Image di-build dan seluruh stack dijalankan: HTTPS, header, login cookie Secure, port DB tertutup, healthcheck
+- [x] Deployment satu image Docker (`deploy/Dockerfile`): web + API (API menyajikan berkas web dengan SPA fallback, CSP, cache) + PostgreSQL 16 (hanya 127.0.0.1) + backup terjadwal; entrypoint menginisialisasi database, membuat user/DB dari env, migrasi, seed, lalu server; mode `restore`. Dijalankan hanya dengan environment: health, restart/stop rapi (exit 0), data persisten, restore ke volume baru. GitHub Action `publish.yml` mempublikasikan image ke GHCR saat tag `vX.Y.Z`
 - [x] Backup/restore: `deploy/backup.sh` (dump + arsip file + checksum + verifikasi + retensi), `deploy/restore.sh` (verifikasi checksum, tolak DB berisi data tanpa `--force`, konfirmasi, transaksi tunggal), backup terjadwal. Teruji otomatis (backup → restore ke DB baru → jumlah baris seluruh tabel identik, trigger/CHECK tetap aktif) dan manual di container
 - [x] CSP produksi teruji di browser (`e2e/tahap8.cjs`): aplikasi berjalan tanpa pelanggaran CSP
 - [x] Dokumentasi: manual pengguna, deployment, backup/restore, keamanan, daftar fitur, API
@@ -110,15 +110,17 @@ Batasan Tahap 7: ikon aplikasi adalah placeholder teks "SIMA" (belum ada logo re
 Bug yang ditemukan pengujian tahap ini dan diperbaiki:
 - `backup.sh`: backup yang gagal dalam detik yang sama dengan backup sukses menghapus folder backup sukses (nama sama). Kini ditulis ke folder sementara dan di-rename setelah semua verifikasi lolos.
 - Zod 4 menguji `Function('')` (JIT) sehingga CSP tanpa `unsafe-eval` mencatat pelanggaran di setiap muat halaman; dimatikan dengan `z.config({ jitless: true })`.
-- Header keamanan nginx hilang pada location yang punya `add_header` sendiri (tidak diwariskan); kini memakai snippet yang di-include di setiap location.
+- Race sinkronisasi offline: setelah kembali online, sinkronisasi antrean opname dikirim sebelum token CSRF dari `/auth/me` terpasang (efek anak berjalan lebih dulu daripada efek provider) sehingga ditolak 403; terlihat saat E2E PWA dijalankan terhadap image asli. Token kini dipasang di `queryFn` sebelum data sampai ke komponen.
 
-Batasan Tahap 8: lihat [`FITUR.md`](FITUR.md). Khusus: langkah `apt-get` pada build image API berbasis `slim` tidak dapat dijalankan di sandbox pengembangan (build diuji dengan `node:22-bookworm`); `pnpm audit --prod` melaporkan 3 temuan transitif yang dinilai tidak terjangkau (lihat `KEAMANAN.md`).
+Batasan Tahap 8: lihat [`FITUR.md`](FITUR.md). Khusus: workflow GitHub Actions belum pernah dijalankan di GitHub; HTTPS memerlukan reverse proxy di depan container; `pnpm audit --prod` melaporkan 3 temuan transitif yang dinilai tidak terjangkau (lihat `KEAMANAN.md`).
 
 ## Regresi akhir
 
-Dijalankan pada 2026-11-02 setelah seluruh perubahan Tahap 8:
+Dijalankan setelah seluruh perubahan Tahap 8 (termasuk image tunggal):
 
 - `pnpm typecheck` (api, web, shared): bersih
-- `pnpm build`: berhasil
-- Test backend: 149 lulus di 14 file (PostgreSQL asli); test frontend: 3
-- E2E browser (tiap skrip pada database bersih): tahap2 35/35, tahap3 43/43, tahap4 45/45, tahap5 41/41, tahap6 39/39, tahap7 impor 18/18, tahap7 PWA 16/16 (build produksi), tahap8 13/13 (build produksi + CSP produksi) = 250/250
+- Test backend: 155 lulus di 15 file (PostgreSQL asli); test frontend: 3
+- E2E browser (tiap skrip pada database bersih): tahap2 35/35, tahap3 43/43, tahap4 45/45, tahap5 41/41, tahap6 39/39, tahap7 impor 18/18, tahap7 PWA 16/16, tahap8 13/13
+- Terhadap **image Docker tunggal** yang berjalan hanya dengan environment: tahap8 13/13 (CSP asli dari server) dan PWA offline 16/16
+
+Catatan: pada regresi pertama tahap3 gagal satu pemeriksaan karena skrip memakai `isVisible()` tanpa menunggu (flake timing; lulus pada dua kali ulang dan kini memakai `waitFor`), dan PWA gagal karena sinkronisasi offline berjalan ganda setelah perbaikan CSRF; kini dijaga satu sinkronisasi pada satu waktu.

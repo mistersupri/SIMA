@@ -56,8 +56,11 @@ export function OpnameScanPage() {
 
   const persist = useCallback((next: QueuedScan[]) => { setQueue(next); if (!writeQueue(id, next)) toast.error('Penyimpanan perangkat penuh atau diblokir. Catatan offline tidak dapat disimpan.'); }, [id]);
 
+  const inFlight = useRef(false);
   const sync = useCallback(async (items: QueuedScan[]) => {
-    if (!items.length) return;
+    // Pemicu mount dan event 'online' dapat datang bersamaan; satu sinkronisasi pada satu waktu.
+    if (!items.length || inFlight.current) return;
+    inFlight.current = true;
     setSyncing(true);
     try {
       const res = await api.post<{ results: SyncResult[]; accepted: number; conflicts: number }>(`/stock-opnames/${id}/sync`, { records: items.map(({ conflict: _c, ...r }) => r) });
@@ -69,7 +72,7 @@ export function OpnameScanPage() {
       void qc.invalidateQueries({ queryKey: ['opname', id] });
     } catch (e) {
       if (!isNetworkError(e)) toast.error(e instanceof ApiError ? e.message : 'Sinkronisasi gagal');
-    } finally { setSyncing(false); }
+    } finally { inFlight.current = false; setSyncing(false); }
   }, [id, persist, qc]);
 
   useEffect(() => {

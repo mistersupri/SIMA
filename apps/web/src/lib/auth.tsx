@@ -25,7 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const me = useQuery({
     queryKey: ['me'],
-    queryFn: async () => (await api.get<AuthPayload>('/auth/me')).data,
+    queryFn: async () => {
+      const data = (await api.get<AuthPayload>('/auth/me')).data;
+      // Token dipasang sebelum data sampai ke komponen. Efek komponen anak (mis. sinkronisasi antrean offline)
+      // berjalan lebih dulu daripada efek di provider ini, sehingga bila token baru dipasang di efek, POST pertama ditolak CSRF.
+      setCsrfToken(data.csrfToken);
+      return data;
+    },
     retry: false,
     staleTime: 60_000,
   });

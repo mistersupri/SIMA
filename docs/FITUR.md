@@ -21,11 +21,11 @@ Penanda **teruji** berarti ada test otomatis (vitest ke PostgreSQL asli) dan/ata
 | Notifikasi | Dalam aplikasi (pribadi) |
 | Pengaturan | Identitas instansi (login, menu, kepala laporan) |
 | Dokumentasi API | `docs/API.md` dibuat otomatis dari 173 route; tes menjamin tidak usang |
-| Deployment | Docker Compose produksi (db, api, web, Caddy HTTPS, backup); image di-build dan stack dijalankan |
+| Deployment | Satu image Docker (web + API + PostgreSQL + backup terjadwal), cukup environment di Docker Compose; image dibangun dan dijalankan, restart/stop rapi, data persisten |
 | Backup/restore | Skrip + backup terjadwal + retensi; tes otomatis restore ke database baru |
 | Tes keamanan | Seluruh route: 401 tanpa login, 403 per role, CSRF, whitelist publik, konfigurasi produksi |
 
-Pada penutupan Tahap 8: 149 test backend, 3 test frontend, dan 250 pemeriksaan E2E browser lulus (lihat "Regresi akhir" di `STATUS.md`).
+Pada penutupan Tahap 8: 155 test backend, 3 test frontend, dan 250 pemeriksaan E2E browser lulus, ditambah E2E tahap8 dan PWA terhadap image Docker asli (lihat "Regresi akhir" di `STATUS.md`).
 
 ## Belum / batasan yang diketahui
 
@@ -41,6 +41,8 @@ Pada penutupan Tahap 8: 149 test backend, 3 test frontend, dan 250 pemeriksaan E
 | Laporan | Export maks. 20.000 baris; PDF memakai font bawaan (karakter non-Latin-1 jadi `?`); grafik SVG sederhana; kartu stok per barang belum berupa export |
 | Pencarian global | Belum ada di topbar |
 | Penyimpanan file | Disk lokal/volume Docker (belum S3/objek storage) |
-| Build image produksi | Langkah `apt-get` pada basis `slim` tidak dapat dijalankan di sandbox pengembangan (lihat `DEPLOYMENT.md`) |
+| Publikasi GitHub Actions | `publish.yml` belum pernah dijalankan di GitHub (Dockerfile yang sama sudah diuji lokal) |
+| HTTPS | Disediakan reverse proxy di depan container (belum diuji dengan proxy sungguhan) |
+| Database di container yang sama | Tanpa replikasi/failover; andalkan backup yang disalin ke luar server |
 | Dependensi | 3 temuan `pnpm audit` transitif yang tidak terjangkau (lihat `KEAMANAN.md`) |
 | Uji beban | Tidak dilakukan; ukuran target: satu instansi |

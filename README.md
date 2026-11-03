@@ -7,7 +7,7 @@ Spesifikasi lengkap ada di PRD/SRS. Dokumentasi:
 |---|---|
 | [`docs/MANUAL-PENGGUNA.md`](docs/MANUAL-PENGGUNA.md) | Panduan pengguna per peran dan alur kerja |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deployment produksi dengan Docker + HTTPS |
-| [`docs/CICD.md`](docs/CICD.md) | GitHub Actions: CI, publikasi image ke GHCR, deploy |
+| [`docs/CICD.md`](docs/CICD.md) | GitHub Actions: publikasi image tunggal ke GHCR |
 | [`docs/BACKUP-RESTORE.md`](docs/BACKUP-RESTORE.md) | Backup terjadwal dan pemulihan |
 | [`docs/API.md`](docs/API.md) | Dokumentasi API (dibuat otomatis dari route) |
 | [`docs/KEAMANAN.md`](docs/KEAMANAN.md) | Kontrol keamanan, hasil audit dependensi, batasan |
@@ -17,12 +17,14 @@ Spesifikasi lengkap ada di PRD/SRS. Dokumentasi:
 
 ## Deployment produksi (ringkas)
 
+Satu image Docker berisi web + API + PostgreSQL. Cukup isi environment di compose:
+
 ```bash
 cp .env.production.example .env      # isi semua nilai GANTI
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-Caddy mengurus HTTPS otomatis; migrasi dan seed berjalan saat container API start; backup terjadwal ke `./backups`. Langkah lengkap: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Taruh di belakang reverse proxy HTTPS. Migrasi, seed, dan backup terjadwal berjalan otomatis. Image dipublikasikan ke GHCR oleh GitHub Actions saat Anda mendorong tag `vX.Y.Z`. Langkah lengkap: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Prasyarat
 
@@ -77,7 +79,7 @@ node e2e/tahap7.cjs   # import Excel (template, preview, kesalahan, commit, sald
 # PWA diuji terhadap build produksi (service worker tidak aktif di dev server):
 pnpm --filter @sima/web build && (cd apps/web && pnpm exec vite preview --port 4173 &)
 node e2e/tahap7-pwa.cjs   # PWA offline
-node e2e/tahap8.cjs       # pengaturan instansi; aplikasi dijalankan dengan CSP produksi dari deploy/security-headers.conf
+node e2e/tahap8.cjs       # pengaturan instansi; aplikasi dijalankan dengan CSP produksi dari apps/api/src/plugins/web.ts
 ```
 
 ### Database test
@@ -98,7 +100,7 @@ apps/api         Fastify + Prisma (modular monolith, /api/v1)
 apps/web         React + Vite + Tailwind
 packages/shared  Permission, role, tipe respons, skema Zod bersama
 scripts          dev.mjs, db.mjs
-deploy           Dockerfile, nginx, Caddyfile, skrip backup/restore
+deploy           Dockerfile image tunggal, entrypoint, skrip backup/restore
 docs             Dokumentasi
 e2e              Skrip E2E Playwright
 ```

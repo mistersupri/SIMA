@@ -1,7 +1,10 @@
 // E2E Tahap 8: pengaturan instansi + kepatuhan CSP produksi.
 // Prasyarat: dev stack di DB E2E kosong (API :3001) dan build web dilayani `vite preview` (:4173).
-// CSP dibaca dari deploy/security-headers.conf (sumber yang sama dengan nginx produksi) dan dipasang
+// CSP dibaca dari apps/api/src/plugins/web.ts (sumber yang sama dengan server produksi) dan dipasang
 // pada setiap respons dokumen; pelanggaran CSP apa pun menggagalkan tes.
+// Mode image produksi: E2E_REAL_HEADERS=1 E2E_PWA_BASE=http://localhost:18080 E2E_BASE=http://localhost:18080
+// (container sima dengan volume baru, ORG_NAME='Nama Instansi', admin@sima.local): header CSP berasal dari server,
+// tanpa intersepsi.
 const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -10,7 +13,7 @@ const BASE = process.env.E2E_PWA_BASE ?? 'http://localhost:4173';
 const API = process.env.E2E_BASE ?? 'http://localhost:5173';
 const OUT = path.resolve(__dirname, 'shots');
 fs.mkdirSync(OUT, { recursive: true });
-const csp = fs.readFileSync(path.resolve(__dirname, '../deploy/security-headers.conf'), 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
+const csp = fs.readFileSync(path.resolve(__dirname, '../apps/api/src/plugins/web.ts'), 'utf8').match(/export const CSP = "([^"]+)"/)[1];
 const results = [];
 let lastPage = null;
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' :: ' + extra : ''}`); };
@@ -20,7 +23,7 @@ const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 
   const violations = [], consoleErrors = [];
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
   await ctx.addInitScript(() => { window.__csp = []; document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`)); });
-  await ctx.route('**/*', async (route) => {
+  if (!process.env.E2E_REAL_HEADERS) await ctx.route('**/*', async (route) => {
     const req = route.request();
     if (req.resourceType() !== 'document' && req.resourceType() !== 'script' && req.resourceType() !== 'stylesheet') return route.continue();
     const res = await route.fetch();

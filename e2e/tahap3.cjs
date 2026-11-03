@@ -187,7 +187,7 @@ async function login(page, email, password, newPassword) {
   await d.getByLabel(/^Jumlah/).fill('100');
   await d.getByRole('button', { name: 'Simpan transaksi' }).click();
   await page.getByText(/Barang masuk BM-\d{4}-\d{4} tercatat/).waitFor();
-  check('barang masuk menambah saldo 100', await page.getByRole('row', { name: /Kertas HVS A4/ }).getByText(/100 Rim/).isVisible());
+  check('barang masuk menambah saldo 100', await page.getByRole('row', { name: /Kertas HVS A4/ }).getByText(/100 Rim/).waitFor({ timeout: 8000 }).then(() => true, () => false));
 
   await page.getByRole('button', { name: 'Barang keluar' }).click();
   d = page.getByRole('dialog');

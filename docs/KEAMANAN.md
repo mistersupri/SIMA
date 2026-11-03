@@ -14,8 +14,8 @@ Ringkasan kontrol keamanan dan cara memverifikasinya.
 | Upload | Validasi isi file (magic bytes), batas ukuran, nama acak, penyimpanan privat di luar webroot, hanya lewat endpoint terautentikasi; guard path traversal | `inventory.test.ts`, `security.test.ts` |
 | Integritas data | CHECK stok tidak negatif; trigger append-only untuk audit log, ledger stok, histori; partial unique index pinjaman; row lock; transaksi atomik | `db-constraints.test.ts`, `backup-restore.test.ts` |
 | Audit | Semua perubahan data penting, login, export, impor, keputusan approval dicatat (sebelum/sesudah); tabel tidak dapat diubah | `reports.test.ts`, `settings.test.ts`, tes modul |
-| Header | Helmet di API (HSTS, nosniff, frame deny); Caddy HSTS; nginx: CSP ketat, `X-Frame-Options: DENY`, `nosniff`, Permissions-Policy (kamera hanya origin sendiri) | Dicek pada stack produksi dan `e2e/tahap8.cjs` |
-| CSP | `default-src 'self'`; skrip hanya dari origin sendiri tanpa `unsafe-eval`/inline; style `unsafe-inline` (dipakai Radix UI) | `e2e/tahap8.cjs` menjalankan aplikasi dengan CSP produksi dan memastikan tidak ada pelanggaran |
+| Header | Helmet di API (HSTS, nosniff); untuk halaman web: CSP ketat, `X-Frame-Options: DENY`, Permissions-Policy (kamera hanya origin sendiri), disajikan oleh API itu sendiri | `web.test.ts`, `e2e/tahap8.cjs` |
+| CSP | `default-src 'self'`; skrip hanya dari origin sendiri tanpa `unsafe-eval`/inline; style `unsafe-inline` (dipakai Radix UI) | `e2e/tahap8.cjs` menjalankan aplikasi dengan CSP produksi (juga terhadap image asli) dan memastikan tidak ada pelanggaran |
 | Produksi | Aplikasi menolak start bila `COOKIE_SECURE=false` atau `SESSION_SECRET` masih contoh/pendek; DB tidak membuka port ke host; error tidak membocorkan stack | `security.test.ts` |
 | PWA | Service worker hanya menyimpan shell; API dan file privat tidak pernah di-cache; token CSRF tidak disimpan di perangkat | `e2e/tahap7-pwa.cjs` |
 
@@ -44,4 +44,6 @@ Jalankan ulang `pnpm audit --prod` secara berkala dan perbarui dependensi saat p
 - Fitur "lupa password" tidak mengirim email (tidak ada SMTP); administrator memakai "Atur ulang password".
 - Tidak ada autentikasi dua faktor.
 - Ikon PWA masih placeholder.
-- Satu-satunya server yang dipercaya sebagai proxy adalah Caddy di jaringan Docker (`trustProxy` aktif di produksi); jangan membuka port `api` langsung ke internet.
+- `trustProxy` aktif di produksi: aplikasi mempercayai `X-Forwarded-*` dari proxy di depannya. Ikat port container ke `127.0.0.1` (default di compose contoh) dan jangan membuka port 8080 langsung ke internet.
+- PostgreSQL di dalam container yang sama hanya mendengarkan `127.0.0.1` (tidak dapat dijangkau dari luar container); proses aplikasi berjalan sebagai user non-root `sima`.
+- HTTPS disediakan reverse proxy Anda, bukan image.

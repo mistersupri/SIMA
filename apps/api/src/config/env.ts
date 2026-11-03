@@ -16,6 +16,8 @@ const schema = z.object({
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
   LOGIN_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(10),
+  // Folder hasil build web; bila diisi, API menyajikan aplikasi web (image Docker tunggal).
+  WEB_DIST: z.string().optional(),
   STORAGE_DIR: z.string().default('./storage'),
   MAX_UPLOAD_MB: z.coerce.number().positive().default(10),
   ORG_CODE: z.string().default('INSTANSI'),
