@@ -7,6 +7,7 @@ Spesifikasi lengkap ada di PRD/SRS. Dokumentasi:
 |---|---|
 | [`docs/MANUAL-PENGGUNA.md`](docs/MANUAL-PENGGUNA.md) | Panduan pengguna per peran dan alur kerja |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deployment produksi dengan Docker + HTTPS |
+| [`docs/CICD.md`](docs/CICD.md) | GitHub Actions: CI, publikasi image ke GHCR, deploy |
 | [`docs/BACKUP-RESTORE.md`](docs/BACKUP-RESTORE.md) | Backup terjadwal dan pemulihan |
 | [`docs/API.md`](docs/API.md) | Dokumentasi API (dibuat otomatis dari route) |
 | [`docs/KEAMANAN.md`](docs/KEAMANAN.md) | Kontrol keamanan, hasil audit dependensi, batasan |

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck, build, dan test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sima
+          POSTGRES_PASSWORD: sima_ci_password
+          POSTGRES_DB: sima_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sima -d sima_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # versi dibaca dari "packageManager" di package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Siapkan .env.test
+        run: |
+          sed -e 's#^DATABASE_URL=.*#DATABASE_URL=postgresql://sima:sima_ci_password@localhost:5432/sima_test?schema=public#' \
+              -e 's#^POSTGRES_PORT=.*#POSTGRES_PORT=5432#' \
+              -e "s#^SESSION_SECRET=.*#SESSION_SECRET=ci-secret-$(openssl rand -hex 24)#" \
+              -e 's#^STORAGE_DIR=.*#STORAGE_DIR=../../storage/test#' \
+              .env.example > .env.test
+          echo "LOGIN_RATE_LIMIT_PER_MIN=1000" >> .env.test
+      - run: pnpm --filter @sima/shared build
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  docker:
+    name: Build image Docker (tanpa push)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      matrix:
+        image: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.${{ matrix.image }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  compose:
+    name: Validasi docker-compose produksi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cp .env.production.example .env
+          docker compose -f docker-compose.prod.yml config --quiet

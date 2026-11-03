@@ -21,6 +21,8 @@ services:
     networks: [internal]
 
   api:
+    # SIMA_API_IMAGE diisi oleh pipeline rilis (image dari GHCR); tanpa itu image dibangun lokal.
+    image: ${SIMA_API_IMAGE:-sima-api:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.api
@@ -50,6 +52,7 @@ services:
     networks: [internal]
 
   web:
+    image: ${SIMA_WEB_IMAGE:-sima-web:local}
     build:
       context: .
       dockerfile: deploy/Dockerfile.web
