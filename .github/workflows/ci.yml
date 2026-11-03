@@ -43,8 +43,8 @@ jobs:
               -e 's#^POSTGRES_PORT=.*#POSTGRES_PORT=5432#' \
               -e "s#^SESSION_SECRET=.*#SESSION_SECRET=ci-secret-$(openssl rand -hex 24)#" \
               -e 's#^STORAGE_DIR=.*#STORAGE_DIR=../../storage/test#' \
+              -e 's#^LOGIN_RATE_LIMIT_PER_MIN=.*#LOGIN_RATE_LIMIT_PER_MIN=1000#' \
               .env.example > .env.test
-          echo "LOGIN_RATE_LIMIT_PER_MIN=1000" >> .env.test
       - run: pnpm --filter @sima/shared build
       - run: pnpm typecheck
       - run: pnpm test
